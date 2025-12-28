@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Edit URL</title>
+</head>
+<body>
+    <h1>Test Edit Links</h1>
+    
+    <h3>Test with hardcoded ID:</h3>
+    <a href="edit-product.html?id=59320cd0-a22a-4fd6-bba1-06ea4eba438a" target="_blank">
+        Test Edit Product 1
+    </a>
+    
+    <h3>Generate from API:</h3>
+    <div id="productLinks"></div>
+    
+    <script>
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                const products = await response.json();
+                
+                const container = document.getElementById('productLinks');
+                products.value.forEach(product => {
+                    const link = document.createElement('a');
+                    link.href = `edit-product.html?id=${product.id}`;
+                    link.target = '_blank';
+                    link.innerHTML = `<div style="margin: 10px; padding: 10px; border: 1px solid #ccc;">
+                        <strong>${product.name}</strong><br>
+                        ID: ${product.id}<br>
+                        Price: ${product.price}
+                    </div>`;
+                    container.appendChild(link);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        loadProducts();
+    </script>
+</body>
+</html>

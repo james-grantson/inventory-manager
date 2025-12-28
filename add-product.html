@@ -1,0 +1,537 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - Stock Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .currency-symbol {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            color: #27ae60;
+            z-index: 10;
+        }
+        .input-with-symbol {
+            position: relative;
+        }
+        .input-with-symbol input {
+            padding-left: 35px;
+        }
+        .category-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+        }
+        .category-card.selected {
+            border: 2px solid #4CAF50;
+            background-color: rgba(76, 175, 80, 0.05);
+        }
+        
+        /* New styles for optional fields */
+        .optional-field {
+            border-left: 3px solid #ffc107;
+            padding-left: 10px;
+        }
+        
+        .profit-preview {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .profit-value {
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .cost-currency {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <i class="fas fa-arrow-left me-2"></i>
+                <div>
+                    <strong>Add New Product</strong>
+                </div>
+            </a>
+            <div class="navbar-text">
+                <a href="index.html" class="btn btn-light btn-sm">
+                    <i class="fas fa-home me-1"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Notification -->
+                <div id="notification" class="alert" style="display: none;"></div>
+
+                <!-- Form Card -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            <i class="fas fa-plus-circle me-2 text-success"></i>
+                            New Product Details
+                        </h5>
+                        <p class="text-muted mb-0 small">Fill in the details below to add a new product to your inventory</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="productForm">
+                            <!-- Product Name -->
+                            <div class="mb-4">
+                                <label for="productName" class="form-label fw-semibold">
+                                    <i class="fas fa-tag me-1"></i> Product Name *
+                                </label>
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="productName" 
+                                       placeholder="e.g., Engine Oil 5W-30, Cement, Brake Pads"
+                                       required>
+                                <div class="form-text">Enter a descriptive name for your product</div>
+                            </div>
+
+                            <!-- SKU (Optional) -->
+                            <div class="mb-4 optional-field">
+                                <label for="productSKU" class="form-label fw-semibold">
+                                    <i class="fas fa-barcode me-1"></i> SKU (Optional)
+                                </label>
+                                <input type="text" class="form-control" 
+                                       id="productSKU" 
+                                       placeholder="e.g., OIL-5W30-001, BP-TOYOTA-2023">
+                                <div class="form-text">Stock Keeping Unit - unique identifier for tracking</div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-4 optional-field">
+                                <label for="productDescription" class="form-label fw-semibold">
+                                    <i class="fas fa-align-left me-1"></i> Description (Optional)
+                                </label>
+                                <textarea class="form-control" 
+                                          id="productDescription" 
+                                          rows="2"
+                                          placeholder="Product details, specifications, or notes"></textarea>
+                                <div class="form-text">Additional information about the product</div>
+                            </div>
+
+                            <!-- Category Selection -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-tags me-1"></i> Category *
+                                </label>
+                                <div class="row g-3" id="categorySelection">
+                                    <div class="col-md-6">
+                                        <div class="card category-card" onclick="selectCategory('Automobile Lubricants')">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-oil-can fa-2x text-primary mb-2"></i>
+                                                <h6 class="card-title mb-1">Automobile Lubricants</h6>
+                                                <small class="text-muted">Engine oil, grease, etc.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card category-card" onclick="selectCategory('Automobile Parts')">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-cog fa-2x text-warning mb-2"></i>
+                                                <h6 class="card-title mb-1">Automobile Parts</h6>
+                                                <small class="text-muted">Spare parts, accessories</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card category-card" onclick="selectCategory('Building Materials')">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-hammer fa-2x text-danger mb-2"></i>
+                                                <h6 class="card-title mb-1">Building Materials</h6>
+                                                <small class="text-muted">Cement, rods, etc.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card category-card" onclick="selectCategory('Other')">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-box fa-2x text-secondary mb-2"></i>
+                                                <h6 class="card-title mb-1">Other</h6>
+                                                <small class="text-muted">Other products</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="productCategory" required>
+                                <div class="form-text mt-2">Click on a category to select it</div>
+                            </div>
+
+                            <!-- Price and Cost in one row -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="productPrice" class="form-label fw-semibold">
+                                        <i class="fas fa-money-bill-wave me-1"></i> Selling Price (₵) *
+                                    </label>
+                                    <div class="input-with-symbol">
+                                        <span class="currency-symbol">₵</span>
+                                        <input type="number" step="0.01" min="0" 
+                                               class="form-control" 
+                                               id="productPrice" 
+                                               placeholder="0.00"
+                                               required
+                                               oninput="calculateProfit()">
+                                    </div>
+                                    <div class="form-text">Price you sell at</div>
+                                </div>
+                                
+                                <div class="col-md-6 optional-field">
+                                    <label for="productCost" class="form-label fw-semibold">
+                                        <i class="fas fa-money-bill me-1 cost-currency"></i> Cost Price (₵) (Optional)
+                                    </label>
+                                    <div class="input-with-symbol">
+                                        <span class="currency-symbol cost-currency">₵</span>
+                                        <input type="number" step="0.01" min="0" 
+                                               class="form-control" 
+                                               id="productCost" 
+                                               placeholder="0.00"
+                                               oninput="calculateProfit()">
+                                    </div>
+                                    <div class="form-text">Price you bought at (for profit calculation)</div>
+                                </div>
+                            </div>
+
+                            <!-- Quantity and Min Stock in one row -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="productQuantity" class="form-label fw-semibold">
+                                        <i class="fas fa-boxes me-1"></i> Quantity *
+                                    </label>
+                                    <input type="number" min="0" 
+                                           class="form-control" 
+                                           id="productQuantity" 
+                                           placeholder="0"
+                                           required
+                                           oninput="calculateProfit()">
+                                    <div class="form-text">Initial stock quantity</div>
+                                </div>
+                                
+                                <div class="col-md-6 optional-field">
+                                    <label for="productMinStock" class="form-label fw-semibold">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> Minimum Stock
+                                    </label>
+                                    <input type="number" min="1" 
+                                           class="form-control" 
+                                           id="productMinStock" 
+                                           placeholder="10"
+                                           value="10">
+                                    <div class="form-text">Get alerts when stock goes below this</div>
+                                </div>
+                            </div>
+
+                            <!-- Supplier and Location in one row -->
+                            <div class="row mb-4">
+                                <div class="col-md-6 optional-field">
+                                    <label for="productSupplier" class="form-label fw-semibold">
+                                        <i class="fas fa-truck me-1"></i> Supplier (Optional)
+                                    </label>
+                                    <input type="text" class="form-control" 
+                                           id="productSupplier" 
+                                           placeholder="e.g., Shell Ghana Ltd, Kumasi Trading">
+                                    <div class="form-text">Who you buy from</div>
+                                </div>
+                                
+                                <div class="col-md-6 optional-field">
+                                    <label for="productLocation" class="form-label fw-semibold">
+                                        <i class="fas fa-map-marker-alt me-1"></i> Location (Optional)
+                                    </label>
+                                    <input type="text" class="form-control" 
+                                           id="productLocation" 
+                                           placeholder="e.g., Shelf A3, Warehouse 2, Store Room">
+                                    <div class="form-text">Where it's stored</div>
+                                </div>
+                            </div>
+
+                            <!-- Profit Preview (Dynamic) -->
+                            <div class="profit-preview" id="profitPreview" style="display: none;">
+                                <h6 class="mb-2">
+                                    <i class="fas fa-chart-line me-2"></i> Profit Preview
+                                </h6>
+                                <div class="row small">
+                                    <div class="col-4">
+                                        <div>Profit per Item:</div>
+                                        <div class="profit-value" id="profitPerItem">₵0.00</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div>Profit Margin:</div>
+                                        <div class="profit-value" id="profitMargin">0%</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div>Total Profit:</div>
+                                        <div class="profit-value" id="totalProfit">₵0.00</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                <a href="index.html" class="btn btn-outline-secondary me-md-2">
+                                    <i class="fas fa-times me-1"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-success btn-lg px-4" id="submitBtn">
+                                    <i class="fas fa-save me-1"></i> Save Product
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Quick Tips - UPDATED -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">
+                            <i class="fas fa-lightbulb me-2 text-warning"></i> Quick Tips
+                        </h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <small>Use clear, descriptive names for easy searching</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <small>Select the correct category for better organization</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <small>Enter cost price to track profits automatically</small>
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <small>Set minimum stock level for automatic alerts</small>
+                            </li>
+                            <li>
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <small>Add supplier & location info for better management</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Category selection
+        function selectCategory(category) {
+            // Remove selected class from all cards
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked card
+            event.currentTarget.classList.add('selected');
+            
+            // Set hidden input value
+            document.getElementById('productCategory').value = category;
+            
+            // Show confirmation
+            showNotification(`Selected: ${category}`, 'info');
+        }
+
+        // Calculate profit preview
+        function calculateProfit() {
+            const price = parseFloat(document.getElementById('productPrice').value) || 0;
+            const cost = parseFloat(document.getElementById('productCost').value) || 0;
+            const quantity = parseInt(document.getElementById('productQuantity').value) || 0;
+            
+            if (cost > 0 && price > 0) {
+                const profitPerItem = price - cost;
+                const profitMargin = cost > 0 ? ((profitPerItem / cost) * 100) : 0;
+                const totalProfit = profitPerItem * quantity;
+                
+                document.getElementById('profitPerItem').textContent = `₵${profitPerItem.toFixed(2)}`;
+                document.getElementById('profitMargin').textContent = `${profitMargin.toFixed(1)}%`;
+                document.getElementById('totalProfit').textContent = `₵${totalProfit.toFixed(2)}`;
+                
+                // Color code based on profit margin
+                const marginElement = document.getElementById('profitMargin');
+                if (profitMargin > 30) {
+                    marginElement.className = 'profit-value text-success';
+                } else if (profitMargin > 10) {
+                    marginElement.className = 'profit-value text-warning';
+                } else {
+                    marginElement.className = 'profit-value text-danger';
+                }
+                
+                document.getElementById('profitPreview').style.display = 'block';
+            } else {
+                document.getElementById('profitPreview').style.display = 'none';
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `alert alert-${type} alert-dismissible fade show`;
+            notification.style.display = 'block';
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Handle form submission
+        document.getElementById('productForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('productName').value.trim(),
+                sku: document.getElementById('productSKU').value.trim() || null,
+                description: document.getElementById('productDescription').value.trim() || null,
+                category: document.getElementById('productCategory').value,
+                price: parseFloat(document.getElementById('productPrice').value) || 0,
+                quantity: parseInt(document.getElementById('productQuantity').value) || 0,
+                cost: document.getElementById('productCost').value ? parseFloat(document.getElementById('productCost').value) : null,
+                supplier: document.getElementById('productSupplier').value.trim() || null,
+                location: document.getElementById('productLocation').value.trim() || null,
+                minStock: parseInt(document.getElementById('productMinStock').value) || 10
+            };
+            
+            // Validate required fields
+            if (!formData.category) {
+                showNotification('Please select a category', 'danger');
+                return;
+            }
+            
+            if (isNaN(formData.price) || formData.price <= 0) {
+                showNotification('Please enter a valid selling price', 'danger');
+                return;
+            }
+            
+            if (isNaN(formData.quantity) || formData.quantity < 0) {
+                showNotification('Please enter a valid quantity', 'danger');
+                return;
+            }
+            
+            // Validate cost if provided
+            if (formData.cost !== null && (isNaN(formData.cost) || formData.cost < 0)) {
+                showNotification('Please enter a valid cost price or leave empty', 'danger');
+                return;
+            }
+            
+            // Validate min stock
+            if (isNaN(formData.minStock) || formData.minStock < 1) {
+                showNotification('Minimum stock must be at least 1', 'danger');
+                return;
+            }
+            
+            // Disable submit button
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    if (data.error === 'Duplicate SKU') {
+                        throw new Error('This SKU already exists. Please use a different SKU.');
+                    }
+                    throw new Error(data.message || data.error || 'Failed to save product');
+                }
+                
+                showNotification('Product added successfully!', 'success');
+                
+                // Clear form after successful save
+                setTimeout(() => {
+                    document.getElementById('productForm').reset();
+                    document.querySelectorAll('.category-card').forEach(card => {
+                        card.classList.remove('selected');
+                    });
+                    document.getElementById('productCategory').value = '';
+                    document.getElementById('productMinStock').value = 10;
+                    document.getElementById('profitPreview').style.display = 'none';
+                    
+                    submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save Product';
+                    submitBtn.disabled = false;
+                    
+                    // Redirect after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                    
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(error.message, 'danger');
+                
+                // Re-enable button
+                submitBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save Product';
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Input validation
+        document.getElementById('productPrice').addEventListener('input', function(e) {
+            let value = e.target.value;
+            if (value.includes('-')) {
+                e.target.value = value.replace('-', '');
+            }
+            calculateProfit();
+        });
+
+        document.getElementById('productCost').addEventListener('input', function(e) {
+            let value = e.target.value;
+            if (value.includes('-')) {
+                e.target.value = value.replace('-', '');
+            }
+            calculateProfit();
+        });
+
+        document.getElementById('productQuantity').addEventListener('input', function(e) {
+            let value = e.target.value;
+            if (value.includes('-')) {
+                e.target.value = value.replace('-', '');
+            }
+            calculateProfit();
+        });
+
+        document.getElementById('productMinStock').addEventListener('input', function(e) {
+            let value = e.target.value;
+            if (value.includes('-')) {
+                e.target.value = value.replace('-', '');
+            }
+        });
+
+        // Auto-calculate profit when page loads if there are values
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default min stock
+            document.getElementById('productMinStock').value = 10;
+            
+            // Auto-calculate if there are already values (useful if user goes back)
+            setTimeout(calculateProfit, 100);
+        });
+    </script>
+</body>
+</html>

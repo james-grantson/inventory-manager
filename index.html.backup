@@ -1,0 +1,215 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-boxes me-2"></i>Inventory Manager
+            </a>
+            <div class="d-flex">
+                <a href="add-product.html" class="btn btn-light me-2">
+                    <i class="fas fa-plus me-1"></i>Add Product
+                </a>
+                <button class="btn btn-light d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                    <i class="fas fa-filter"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Dashboard Cards -->
+            <div class="col-12 mb-4">
+                <div class="row" id="dashboardCards">
+                    <!-- Cards will be loaded dynamically -->
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <!-- Search and Main Content -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="searchInput" 
+                                           placeholder="Search products by name, SKU, supplier, or location...">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-md-end">
+                                    <select class="form-select me-2" id="categoryFilter" style="max-width: 200px;">
+                                        <option value="">All Categories</option>
+                                        <!-- Categories will be populated dynamically -->
+                                    </select>
+                                    <button class="btn btn-outline-primary" id="exportBtn">
+                                        <i class="fas fa-file-export me-1"></i>Export
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Info -->
+                <div class="alert alert-info py-2 mb-3" id="filterMessage">
+                    <span id="resultCount">Loading...</span>
+                </div>
+
+                <!-- Products Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th><input type="checkbox" id="selectAll"></th>
+                                <th>Product Name</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Quantity</th>
+                                <th>Price ()</th>
+                                <th>Profit ()</th>
+                                <th>Margin</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <!-- Products will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Filter Sidebar - Visible on desktop, collapsible on mobile -->
+            <div class="col-lg-3">
+                <div class="collapse d-lg-block" id="filterCollapse">
+                    <div class="card filter-card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h5>
+                            <button class="btn btn-sm btn-link text-decoration-none" id="clearFilters">Clear All</button>
+                        </div>
+                        <div class="card-body">
+                            
+                            <!-- Price Range -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Price Range ()</label>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted" id="priceMin">0</span>
+                                    <span class="text-primary fw-bold" id="priceMax">10000</span>
+                                </div>
+                                <input type="range" class="form-range" id="priceRange" min="0" max="10000" step="100" value="10000">
+                            </div>
+                            
+                            <!-- Profit Margin -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Min Profit Margin</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="minProfit" min="0" max="500" value="0">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Stock Status -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Stock Status</label>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="filterLow" checked>
+                                    <label class="form-check-label d-flex align-items-center" for="filterLow">
+                                        <span class="badge bg-warning me-2"></span>
+                                        Low Stock
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="filterAdequate" checked>
+                                    <label class="form-check-label d-flex align-items-center" for="filterAdequate">
+                                        <span class="badge bg-success me-2"></span>
+                                        Adequate
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="filterOut" checked>
+                                    <label class="form-check-label d-flex align-items-center" for="filterOut">
+                                        <span class="badge bg-danger me-2"></span>
+                                        Out of Stock
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Category Filter -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Category</label>
+                                <select class="form-select" id="categorySelectFilter">
+                                    <option value="">All Categories</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Supplier Filter -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Supplier</label>
+                                <select class="form-select" id="supplierSelectFilter">
+                                    <option value="">All Suppliers</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Active Filters Counter -->
+                            <div class="mt-4 pt-3 border-top">
+                                <div class="alert alert-light py-2 mb-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small><i class="fas fa-filter me-1"></i> <span id="filterCount">0</span> active filters</small>
+                                        <small><span id="visibleCount">0</span> products shown</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1000">
+        <div class="btn-group dropup">
+            <button type="button" class="btn btn-primary btn-lg rounded-circle shadow" 
+                    style="width: 60px; height: 60px;" data-bs-toggle="dropdown">
+                <i class="fas fa-bolt"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="add-product.html">
+                    <i class="fas fa-plus me-2"></i>Add Product
+                </a></li>
+                <li><a class="dropdown-item" href="#" id="quickExportBtn">
+                    <i class="fas fa-file-export me-2"></i>Export CSV
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" id="viewLowStock">
+                    <i class="fas fa-exclamation-triangle me-2"></i>View Low Stock
+                </a></li>
+                <li><a class="dropdown-item" href="#" id="viewProfitable">
+                    <i class="fas fa-chart-line me-2"></i>View Most Profitable
+                </a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/filters.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/shortcuts.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

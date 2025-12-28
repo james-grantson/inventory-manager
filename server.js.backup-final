@@ -1,0 +1,902 @@
+﻿// ===========================================
+// Inventory Stock Manager - COMPLETE VERSION
+// Compatible with UUID IDs and all schema fields
+// ===========================================
+
+const express = require('express');
+const cors = require('cors');
+const { PrismaClient } = require('@prisma/client');
+const app = express();
+const prisma = new PrismaClient();
+const PORT = 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static('.'));
+
+// ===========================================
+// ROOT ROUTE - Serve the dashboard
+// ===========================================
+
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+}); // Serve from root directory
+
+// Allowed categories for your business
+const ALLOWED_CATEGORIES = [
+    'Automobile Lubricants',
+    'Automobile Parts',
+    'Building Materials',
+    'Other'
+];
+
+// ===========================================
+// HELPER: Add profit calculation to products
+// ===========================================
+
+function addProfitCalculation(product) {
+    const cost = product.cost || 0;
+    const price = product.price || 0;
+    const profit = price - cost;
+    
+    return {
+        ...product,
+        profitPerItem: profit,
+        profitMargin: cost > 0 ? ((profit / cost) * 100).toFixed(1) : null,
+        totalProfit: profit * product.quantity,
+        isLowStock: product.quantity <= product.minStock
+    };
+}
+
+// ===========================================
+// API ENDPOINTS
+// ===========================================
+
+// 1. HEALTH CHECK
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        message: 'Server is running',
+        time: new Date().toISOString(),
+        database: 'PostgreSQL with Prisma',
+        idType: 'UUID',
+        currency: 'Ghana Cedis (â‚µ)'
+    });
+});
+
+// 2. GET ALL PRODUCTS (WITH PROFIT CALCULATION)
+app.get('/api/products', async (req, res) => {
+    try {
+        console.log('ðŸ“¦ Fetching all products...');
+        const products = await prisma.product.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+        
+        // Add profit calculation to all products
+        const productsWithProfit = products.map(product => addProfitCalculation(product));
+        
+        console.log(`âœ… Retrieved ${products.length} products`);
+        res.json(productsWithProfit);
+    } catch (error) {
+        console.error('âŒ Error fetching products:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch products',
+            details: error.message 
+        });
+    }
+});
+
+// 3. GET SINGLE PRODUCT (UUID)
+app.get('/api/products/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        console.log(`ðŸ” Fetching product ID: ${id}`);
+        
+        const product = await prisma.product.findUnique({
+            where: { id }
+        });
+        
+        if (!product) {
+            console.log(`âŒ Product ${id} not found`);
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        
+        console.log(`âœ… Found product: ${product.name}`);
+        const productWithProfit = addProfitCalculation(product);
+        res.json(productWithProfit);
+        
+    } catch (error) {
+        console.error(`âŒ Error fetching product ${req.params.id}:`, error);
+        res.status(500).json({ 
+            error: 'Failed to fetch product',
+            details: error.message 
+        });
+    }
+});
+
+// 4. CREATE PRODUCT
+app.post('/api/products', async (req, res) => {
+    try {
+        console.log('ðŸ†• Creating new product...');
+        
+        const { 
+            name, 
+            sku, 
+            description, 
+            price, 
+            quantity, 
+            category,
+            cost,
+            supplier,
+            location,
+            minStock
+        } = req.body;
+        
+        // Basic validation
+        if (!name || !name.trim()) {
+            return res.status(400).json({ 
+                error: 'Product name is required' 
+            });
+        }
+        
+        if (!category || !category.trim()) {
+            return res.status(400).json({ 
+                error: 'Category is required' 
+            });
+        }
+        
+        if (!ALLOWED_CATEGORIES.includes(category)) {
+            return res.status(400).json({ 
+                error: 'Invalid category',
+                message: `Category must be one of: ${ALLOWED_CATEGORIES.join(', ')}`
+            });
+        }
+        
+        const priceNum = parseFloat(price);
+        if (isNaN(priceNum) || priceNum < 0) {
+            return res.status(400).json({ 
+                error: 'Price must be a positive number' 
+            });
+        }
+        
+        const quantityNum = parseInt(quantity);
+        if (isNaN(quantityNum) || quantityNum < 0) {
+            return res.status(400).json({ 
+                error: 'Quantity must be a non-negative integer' 
+            });
+        }
+        
+        // Create the product
+        const product = await prisma.product.create({
+            data: {
+                name: name.trim(),
+                sku: sku ? sku.trim() : null,
+                description: description ? description.trim() : null,
+                price: priceNum,
+                quantity: quantityNum,
+                category: category.trim(),
+                cost: cost ? parseFloat(cost) : null,
+                supplier: supplier ? supplier.trim() : null,
+                location: location ? location.trim() : null,
+                minStock: minStock ? parseInt(minStock) : 10
+            }
+        });
+        
+        console.log('====================================');
+        console.log('âœ… PRODUCT CREATED SUCCESSFULLY');
+        console.log(`ID: ${product.id} (UUID)`);
+        console.log(`Name: ${product.name}`);
+        console.log(`Price: â‚µ${product.price}`);
+        console.log(`Cost: ${product.cost ? 'â‚µ' + product.cost : 'Not set'}`);
+        console.log(`Quantity: ${product.quantity}`);
+        console.log(`Min Stock: ${product.minStock}`);
+        console.log('====================================');
+        
+        const productWithProfit = addProfitCalculation(product);
+        
+        res.status(201).json({
+            success: true,
+            message: 'Product created successfully',
+            product: productWithProfit
+        });
+        
+    } catch (error) {
+        console.error('âŒ ERROR CREATING PRODUCT:', error);
+        
+        if (error.code === 'P2002') {
+            return res.status(400).json({ 
+                error: 'Duplicate SKU',
+                message: 'This SKU already exists. Please use a different SKU.'
+            });
+        }
+        
+        if (error.code === 'P2003') {
+            return res.status(400).json({ 
+                error: 'Database constraint failed',
+                message: 'Please check your input data'
+            });
+        }
+        
+        res.status(500).json({ 
+            error: 'Failed to create product',
+            details: error.message
+        });
+    }
+});
+
+// 5. UPDATE PRODUCT (FIXED FOR PARTIAL UPDATES)
+app.put('/api/products/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        console.log(`âœï¸ Updating product ID: ${id}`);
+        
+        // Get existing product first
+        const existingProduct = await prisma.product.findUnique({
+            where: { id }
+        });
+        
+        if (!existingProduct) {
+            console.log(`âŒ Product ${id} not found`);
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        
+        const { 
+            name, 
+            sku, 
+            description, 
+            price, 
+            quantity, 
+            category,
+            cost,
+            supplier,
+            location,
+            minStock
+        } = req.body;
+        
+        // Prepare update data (use existing values if not provided)
+        const updateData = {};
+        
+        // Only include fields that were actually provided
+        if (name !== undefined) updateData.name = name.trim();
+        if (sku !== undefined) updateData.sku = sku ? sku.trim() : null;
+        if (description !== undefined) updateData.description = description ? description.trim() : null;
+        if (price !== undefined) updateData.price = parseFloat(price);
+        if (quantity !== undefined) updateData.quantity = parseInt(quantity);
+        if (category !== undefined) updateData.category = category.trim();
+        if (cost !== undefined) updateData.cost = cost ? parseFloat(cost) : null;
+        if (supplier !== undefined) updateData.supplier = supplier ? supplier.trim() : null;
+        if (location !== undefined) updateData.location = location ? location.trim() : null;
+        if (minStock !== undefined) updateData.minStock = parseInt(minStock);
+        
+        // Validate the merged data
+        const validationErrors = [];
+        
+        if (updateData.name !== undefined && (!updateData.name || updateData.name.trim().length === 0)) {
+            validationErrors.push('Product name cannot be empty');
+        }
+        
+        if (updateData.category !== undefined) {
+            if (!updateData.category || updateData.category.trim().length === 0) {
+                validationErrors.push('Category cannot be empty');
+            } else if (!ALLOWED_CATEGORIES.includes(updateData.category)) {
+                validationErrors.push(`Category must be one of: ${ALLOWED_CATEGORIES.join(', ')}`);
+            }
+        }
+        
+        if (updateData.price !== undefined && (isNaN(updateData.price) || updateData.price < 0)) {
+            validationErrors.push('Price must be a positive number');
+        }
+        
+        if (updateData.quantity !== undefined && (isNaN(updateData.quantity) || updateData.quantity < 0)) {
+            validationErrors.push('Quantity must be a non-negative integer');
+        }
+        
+        if (validationErrors.length > 0) {
+            console.log('âŒ Validation failed:', validationErrors);
+            return res.status(400).json({
+                error: 'Validation failed',
+                messages: validationErrors
+            });
+        }
+        
+        // Update the product
+        const updatedProduct = await prisma.product.update({
+            where: { id },
+            data: updateData
+        });
+        
+        console.log(`âœ… Product updated: ${updatedProduct.name}`);
+        
+        // Add profit calculation
+        const costValue = updatedProduct.cost || 0;
+        const priceValue = updatedProduct.price || 0;
+        const profit = priceValue - costValue;
+        
+        const productWithProfit = {
+            ...updatedProduct,
+            profitPerItem: profit,
+            profitMargin: costValue > 0 ? ((profit / costValue) * 100).toFixed(1) : null,
+            totalProfit: profit * updatedProduct.quantity,
+            isLowStock: updatedProduct.quantity <= updatedProduct.minStock
+        };
+        
+        res.json({
+            success: true,
+            message: 'Product updated successfully',
+            product: productWithProfit
+        });
+        
+    } catch (error) {
+        console.error(`âŒ Error updating product ${req.params.id}:`, error);
+        
+        if (error.code === 'P2025') {
+            res.status(404).json({ error: 'Product not found' });
+        } else if (error.code === 'P2002') {
+            res.status(400).json({ 
+                error: 'Duplicate SKU',
+                message: 'This SKU already exists for another product'
+            });
+        } else {
+            res.status(500).json({ 
+                error: 'Failed to update product',
+                details: error.message 
+            });
+        }
+    }
+});
+
+// 6. DELETE PRODUCT
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        console.log(`ðŸ—‘ï¸ Deleting product ID: ${id}`);
+        
+        const product = await prisma.product.delete({
+            where: { id }
+        });
+        
+        console.log(`âœ… Product deleted: ${product.name}`);
+        res.json({ 
+            success: true,
+            message: 'Product deleted successfully',
+            deletedProduct: product
+        });
+        
+    } catch (error) {
+        console.error(`âŒ Error deleting product ${req.params.id}:`, error);
+        if (error.code === 'P2025') {
+            res.status(404).json({ error: 'Product not found' });
+        } else {
+            res.status(500).json({ 
+                error: 'Failed to delete product',
+                details: error.message 
+            });
+        }
+    }
+});
+
+// 7. GET CATEGORIES
+app.get('/api/categories', (req, res) => {
+    res.json({
+        categories: ALLOWED_CATEGORIES,
+        count: ALLOWED_CATEGORIES.length
+    });
+});
+
+// 8. GET LOW STOCK ALERTS
+app.get('/api/alerts/low-stock', async (req, res) => {
+    try {
+        console.log('ðŸš¨ Checking low stock alerts...');
+        
+        const lowStockProducts = await prisma.product.findMany({
+            where: {
+                quantity: {
+                    lte: prisma.product.fields.minStock
+                }
+            },
+            orderBy: { quantity: 'asc' }
+        });
+        
+        // Add profit calculation to alerts
+        const alertsWithProfit = lowStockProducts.map(product => addProfitCalculation(product));
+        
+        console.log(`âœ… Found ${alertsWithProfit.length} low stock products`);
+        res.json({
+            count: alertsWithProfit.length,
+            alerts: alertsWithProfit,
+            timestamp: new Date().toISOString(),
+            message: alertsWithProfit.length > 0 ? 
+                `Found ${alertsWithProfit.length} products with low stock` :
+                'All products have sufficient stock'
+        });
+        
+    } catch (error) {
+        console.error('âŒ Error checking low stock alerts:', error);
+        res.status(500).json({ 
+            error: 'Failed to check low stock alerts',
+            details: error.message 
+        });
+    }
+});
+
+// 9. GET INVENTORY SUMMARY
+app.get('/api/inventory/summary', async (req, res) => {
+    try {
+        console.log('ðŸ“Š Generating inventory summary...');
+        
+        const products = await prisma.product.findMany();
+        
+        let totalValue = 0;
+        let totalCost = 0;
+        let totalItems = 0;
+        let lowStockCount = 0;
+        const categorySummary = {};
+        
+        products.forEach(product => {
+            const productValue = (product.price || 0) * product.quantity;
+            const productCost = (product.cost || 0) * product.quantity;
+            
+            totalValue += productValue;
+            totalCost += productCost;
+            totalItems += product.quantity;
+            
+            if (product.quantity <= product.minStock) {
+                lowStockCount++;
+            }
+            
+            // Category breakdown
+            const category = product.category || 'Uncategorized';
+            if (!categorySummary[category]) {
+                categorySummary[category] = {
+                    count: 0,
+                    totalValue: 0,
+                    totalItems: 0,
+                    totalCost: 0
+                };
+            }
+            categorySummary[category].count++;
+            categorySummary[category].totalValue += productValue;
+            categorySummary[category].totalItems += product.quantity;
+            categorySummary[category].totalCost += productCost;
+        });
+        
+        const totalProfit = totalValue - totalCost;
+        const profitMargin = totalValue > 0 ? (totalProfit / totalValue) * 100 : 0;
+        const averageProfitPerItem = totalItems > 0 ? totalProfit / totalItems : 0;
+        
+        res.json({
+            summary: {
+                totalProducts: products.length,
+                totalItems,
+                totalValue: parseFloat(totalValue.toFixed(2)),
+                totalCost: parseFloat(totalCost.toFixed(2)),
+                totalProfit: parseFloat(totalProfit.toFixed(2)),
+                profitMargin: parseFloat(profitMargin.toFixed(1)),
+                averageProfitPerItem: parseFloat(averageProfitPerItem.toFixed(2)),
+                lowStockCount,
+                currency: 'GHS (â‚µ)'
+            },
+            categories: categorySummary,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('âŒ Error generating inventory summary:', error);
+        res.status(500).json({ 
+            error: 'Failed to generate inventory summary',
+            details: error.message 
+        });
+    }
+});
+
+// 10. SEARCH PRODUCTS
+app.get('/api/products/search/:query', async (req, res) => {
+    try {
+        const query = req.params.query;
+        console.log(`ðŸ”Ž Searching for: ${query}`);
+        
+        const products = await prisma.product.findMany({
+            where: {
+                OR: [
+                    { name: { contains: query, mode: 'insensitive' } },
+                    { sku: { contains: query, mode: 'insensitive' } },
+                    { category: { contains: query, mode: 'insensitive' } },
+                    { description: { contains: query, mode: 'insensitive' } },
+                    { supplier: { contains: query, mode: 'insensitive' } },
+                    { location: { contains: query, mode: 'insensitive' } }
+                ]
+            },
+            orderBy: { name: 'asc' }
+        });
+        
+        // Add profit calculation to search results
+        const productsWithProfit = products.map(product => addProfitCalculation(product));
+        
+        console.log(`âœ… Found ${products.length} products matching "${query}"`);
+        res.json(productsWithProfit);
+        
+    } catch (error) {
+        console.error(`âŒ Error searching for ${req.params.query}:`, error);
+        res.status(500).json({ 
+            error: 'Failed to search products',
+            details: error.message 
+        });
+    }
+});
+
+// 11. GET PRODUCTS BY CATEGORY
+app.get('/api/products/category/:category', async (req, res) => {
+    try {
+        const category = req.params.category;
+        console.log(`ðŸ“‚ Fetching products for category: ${category}`);
+        
+        const products = await prisma.product.findMany({
+            where: { 
+                category: {
+                    equals: category,
+                    mode: 'insensitive'
+                }
+            },
+            orderBy: { name: 'asc' }
+        });
+        
+        // Add profit calculation
+        const productsWithProfit = products.map(product => addProfitCalculation(product));
+        
+        console.log(`âœ… Found ${products.length} products in category "${category}"`);
+        res.json(productsWithProfit);
+        
+    } catch (error) {
+        console.error(`âŒ Error fetching products for category ${req.params.category}:`, error);
+        res.status(500).json({ 
+            error: 'Failed to fetch products by category',
+            details: error.message 
+        });
+    }
+});
+
+// ===========================================
+// ERROR HANDLING
+
+// ==================== NEW ENHANCED ENDPOINTS ====================
+
+// Get profit by category for chart (NEW ENDPOINT)
+app.get('/api/inventory/profit-by-category', async (req, res) => {
+    try {
+        console.log(' Generating profit by category data...');
+        
+        const products = await prisma.product.findMany();
+        
+        const profitByCategory = {};
+        
+        products.forEach(product => {
+            const category = product.category || 'Uncategorized';
+            const profit = ((product.price || 0) - (product.cost || 0)) * product.quantity;
+            
+            if (!profitByCategory[category]) {
+                profitByCategory[category] = {
+                    category,
+                    totalProfit: 0,
+                    productCount: 0,
+                    totalValue: 0,
+                    totalItems: 0
+                };
+            }
+            
+            profitByCategory[category].totalProfit += profit;
+            profitByCategory[category].productCount += 1;
+            profitByCategory[category].totalValue += (product.price || 0) * product.quantity;
+            profitByCategory[category].totalItems += product.quantity;
+        });
+        
+        const result = Object.values(profitByCategory)
+            .sort((a, b) => b.totalProfit - a.totalProfit);
+        
+        console.log(` Generated profit data for ${result.length} categories`);
+        res.json(result);
+        
+    } catch (error) {
+        console.error(' Error generating profit by category:', error);
+        res.status(500).json({ 
+            error: 'Failed to get profit data',
+            details: error.message 
+        });
+    }
+});
+
+// Get suppliers list for filter (NEW ENDPOINT)
+app.get('/api/inventory/suppliers', async (req, res) => {
+    try {
+        console.log(' Fetching suppliers list...');
+        
+        const products = await prisma.product.findMany();
+        
+        // Extract unique suppliers
+        const suppliersMap = {};
+        products.forEach(product => {
+            if (product.supplier) {
+                if (!suppliersMap[product.supplier]) {
+                    suppliersMap[product.supplier] = {
+                        name: product.supplier,
+                        count: 0,
+                        productCount: 0
+                    };
+                }
+                suppliersMap[product.supplier].count++;
+                suppliersMap[product.supplier].productCount += product.quantity;
+            }
+        });
+        
+        const suppliers = Object.values(suppliersMap)
+            .sort((a, b) => b.count - a.count);
+        
+        console.log(` Found ${suppliers.length} suppliers`);
+        res.json(suppliers);
+        
+    } catch (error) {
+        console.error(' Error fetching suppliers:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch suppliers',
+            details: error.message 
+        });
+    }
+});
+
+// Bulk update endpoint (NEW ENDPOINT)
+app.post('/api/products/bulk-update', async (req, res) => {
+    try {
+        const { productIds, updates } = req.body;
+        console.log(` Bulk updating ${productIds?.length || 0} products...`);
+        
+        if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+            return res.status(400).json({ error: 'No product IDs provided' });
+        }
+        
+        if (!updates || typeof updates !== 'object') {
+            return res.status(400).json({ error: 'No updates provided' });
+        }
+        
+        // Validate updates
+        const validFields = ['price', 'cost', 'quantity', 'minStock', 'category', 'supplier', 'location'];
+        const updateData = {};
+        
+        Object.keys(updates).forEach(key => {
+            if (validFields.includes(key)) {
+                updateData[key] = updates[key];
+            }
+        });
+        
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: 'No valid fields to update' });
+        }
+        
+        // Update products
+        const result = await prisma.product.updateMany({
+            where: {
+                id: {
+                    in: productIds
+                }
+            },
+            data: updateData
+        });
+        
+        console.log(` Bulk updated ${result.count} products`);
+        res.json({
+            success: true,
+            message: `Successfully updated ${result.count} products`,
+            count: result.count,
+            updatedFields: Object.keys(updateData)
+        });
+        
+    } catch (error) {
+        console.error(' Error in bulk update:', error);
+        res.status(500).json({ 
+            error: 'Failed to perform bulk update',
+            details: error.message 
+        });
+    }
+});
+
+// Export data endpoint (NEW ENDPOINT)
+app.get('/api/inventory/export', async (req, res) => {
+    try {
+        console.log(' Generating export data...');
+        
+        const products = await prisma.product.findMany({
+            orderBy: { name: 'asc' }
+        });
+        
+        // Format for export
+        const exportData = products.map(product => {
+            const profit = ((product.price || 0) - (product.cost || 0)) * product.quantity;
+            const profitMargin = product.cost > 0 ? 
+                (((product.price || 0) - product.cost) / product.cost * 100).toFixed(2) : 
+                null;
+            
+            return {
+                id: product.id,
+                name: product.name,
+                sku: product.sku || '',
+                description: product.description || '',
+                category: product.category || '',
+                quantity: product.quantity,
+                price: product.price,
+                cost: product.cost || 0,
+                supplier: product.supplier || '',
+                location: product.location || '',
+                minStock: product.minStock,
+                createdAt: product.createdAt,
+                updatedAt: product.updatedAt,
+                profit: profit,
+                profitMargin: profitMargin,
+                totalValue: (product.price || 0) * product.quantity,
+                stockStatus: product.quantity === 0 ? 'Out of Stock' : 
+                            product.quantity <= product.minStock ? 'Low Stock' : 'Adequate'
+            };
+        });
+        
+        console.log(` Generated export data for ${exportData.length} products`);
+        res.json({
+            success: true,
+            count: exportData.length,
+            timestamp: new Date().toISOString(),
+            data: exportData
+        });
+        
+    } catch (error) {
+        console.error(' Error generating export:', error);
+        res.status(500).json({ 
+            error: 'Failed to generate export data',
+            details: error.message 
+        });
+    }
+});
+
+// ==================== END OF NEW ENDPOINTS ====================
+// ==================== ENHANCED FEATURES ENDPOINTS ====================
+
+// Get profit by category for chart
+app.get('/api/inventory/profit-by-category', async (req, res) => {
+    try {
+        const products = await prisma.product.findMany();
+        
+        const profitByCategory = {};
+        
+        products.forEach(product => {
+            const category = product.category || 'Uncategorized';
+            const profit = ((product.price || 0) - (product.cost || 0)) * product.quantity;
+            
+            if (!profitByCategory[category]) {
+                profitByCategory[category] = {
+                    category,
+                    totalProfit: 0,
+                    productCount: 0
+                };
+            }
+            
+            profitByCategory[category].totalProfit += profit;
+            profitByCategory[category].productCount += 1;
+        });
+        
+        const result = Object.values(profitByCategory)
+            .sort((a, b) => b.totalProfit - a.totalProfit);
+        
+        res.json(result);
+    } catch (error) {
+        console.error('Profit by category error:', error);
+        res.status(500).json({ error: 'Failed to get profit data' });
+    }
+});
+
+// ==================== END OF ENHANCED ENDPOINTS ====================
+// ==================== ENHANCED FEATURES ENDPOINTS ====================
+
+// Get profit by category for chart
+app.get('/api/inventory/profit-by-category', async (req, res) => {
+    try {
+        const products = await prisma.product.findMany();
+        
+        const profitByCategory = {};
+        
+        products.forEach(product => {
+            const category = product.category || 'Uncategorized';
+            const profit = ((product.price || 0) - (product.cost || 0)) * product.quantity;
+            
+            if (!profitByCategory[category]) {
+                profitByCategory[category] = {
+                    category,
+                    totalProfit: 0,
+                    productCount: 0
+                };
+            }
+            
+            profitByCategory[category].totalProfit += profit;
+            profitByCategory[category].productCount += 1;
+        });
+        
+        const result = Object.values(profitByCategory)
+            .sort((a, b) => b.totalProfit - a.totalProfit);
+        
+        res.json(result);
+    } catch (error) {
+        console.error('Profit by category error:', error);
+        res.status(500).json({ error: 'Failed to get profit data' });
+    }
+});
+
+// ==================== END OF ENHANCED ENDPOINTS ====================// ===========================================
+
+// Handle 404 routes
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'Endpoint not found',
+        message: `Route ${req.method} ${req.originalUrl} does not exist`
+    });
+});
+
+// Handle other errors
+app.use((err, req, res, next) => {
+    console.error('ðŸ”¥ Server error:', err);
+    res.status(500).json({
+        error: 'Internal server error',
+        message: 'Something went wrong on our end'
+    });
+});
+
+// ===========================================
+// START SERVER
+// ===========================================
+
+app.listen(PORT, async () => {
+    console.log('='.repeat(60));
+    console.log('ðŸš€ INVENTORY STOCK MANAGER SERVER');
+    console.log('='.repeat(60));
+    console.log(`âœ… Server running: http://localhost:${PORT}`);
+    console.log(`ðŸ“ Frontend: http://localhost:${PORT}/index.html`);
+    console.log(`ðŸ“Š API Health: http://localhost:${PORT}/api/health`);
+    console.log('='.repeat(60));
+    console.log('ðŸ“ AVAILABLE ENDPOINTS:');
+    console.log('  GET    /api/health                    - Health check');
+    console.log('  GET    /api/products                  - List all products');
+    console.log('  GET    /api/products/:id              - Get single product');
+    console.log('  POST   /api/products                  - Create product');
+    console.log('  PUT    /api/products/:id              - Update product');
+    console.log('  DELETE /api/products/:id              - Delete product');
+    console.log('  GET    /api/categories                - List categories');
+    console.log('  GET    /api/alerts/low-stock          - Low stock alerts');
+    console.log('  GET    /api/inventory/summary         - Inventory summary');
+    console.log('  GET    /api/products/search/:query    - Search products');
+    console.log('  GET    /api/products/category/:category - Filter by category');
+    console.log('='.repeat(60));
+    console.log('ðŸ’° FEATURES:');
+    console.log('  â€¢ Profit calculation (per item & total)');
+    console.log('  â€¢ Profit margin percentage');
+    console.log('  â€¢ Low stock detection');
+    console.log('  â€¢ UUID product IDs');
+    console.log('  â€¢ All schema fields supported');
+    console.log('  â€¢ Partial updates allowed');
+    console.log('='.repeat(60));
+    
+    // Check database connection
+    try {
+        await prisma.$connect();
+        console.log('âœ… Database connection established');
+    } catch (error) {
+        console.error('âŒ Database connection failed:', error);
+    }
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+});
+
+
+
