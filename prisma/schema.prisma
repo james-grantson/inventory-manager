@@ -1,37 +1,20 @@
-﻿// ============================================
-// CORRECT SCHEMA FOR INVENTORY MANAGER
-// Matches your server.js exactly
-// ============================================
+﻿datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")  //  This matches your .env file
-}
-
-// ==================== PRODUCT MODEL ====================
-// This is ALL your server.js uses
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  sku         String?  @unique
-  description String?
-  quantity    Int      @default(0)
-  price       Float    @default(0)
-  cost        Float?
-  category    String?
-  supplier    String?
-  location    String?
-  minStock    Int      @default(10)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Indexes for better performance
-  @@index([sku])
-  @@index([category])
-  @@index([supplier])
-  @@index([location])
+  id        String   @id @default(uuid())
+  name      String
+  category  String
+  price     Float
+  cost      Float
+  quantity  Int
+  lowStockThreshold Int @default(10)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
