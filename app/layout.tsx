@@ -16,7 +16,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <head>
+        <link rel="stylesheet" href="/styles.css" />
+      </head>
+      <body className={inter.className}>
+        <nav className="navbar">
+          <div className="container">
+            <a href="/" className="navbar-brand"> Inventory Manager</a>
+          </div>
+        </nav>
+        <main className="py-4">
+          {children}
+        </main>
+      </body>
     </html>
   )
 }
