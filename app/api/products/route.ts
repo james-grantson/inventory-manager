@@ -4,73 +4,140 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 export async function GET() {
   try {
     if (!isSupabaseConfigured()) {
-      return NextResponse.json({
-        message: 'API is working! Supabase not configured yet.',
-        products: [],
-        status: 'demo-mode'
-      })
+      return NextResponse.json(
+        { error: 'Supabase not configured' },
+        { status: 500 }
+      )
     }
 
-    const { data: products, error } = await supabase
+    const { data, error } = await supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false })
 
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json({
-        error: 'Database error',
-        products: []
-      }, { status: 500 })
-    }
+    if (error) throw error
 
-    return NextResponse.json({
-      message: 'Products fetched successfully',
-      products: products || []
+    return NextResponse.json({ 
+      success: true, 
+      products: data || [],
+      count: data?.length || 0,
+      timestamp: new Date().toISOString()
     })
-  } catch (error) {
-    console.error('Server error:', error)
-    return NextResponse.json({
-      error: 'Internal server error',
-      products: []
-    }, { status: 500 })
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    )
   }
 }
 
 export async function POST(request: Request) {
   try {
     if (!isSupabaseConfigured()) {
-      const body = await request.json()
-      return NextResponse.json({
-        message: 'Demo mode: Product would be saved to Supabase',
-        product: { ...body, id: Date.now(), created_at: new Date().toISOString() },
-        note: 'Supabase credentials needed for persistence'
-      }, { status: 201 })
+      return NextResponse.json(
+        { error: 'Supabase not configured' },
+        { status: 500 }
+      )
     }
 
     const body = await request.json()
+    
     const { data, error } = await supabase
       .from('products')
       .insert([body])
       .select()
       .single()
 
-    if (error) {
-      console.error('Supabase error:', error)
+    if (error) throw error
+
+    return NextResponse.json({ 
+      success: true, 
+      product: data,
+      message: 'Product created successfully'
+    })
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    if (!isSupabaseConfigured()) {
       return NextResponse.json(
-        { error: 'Failed to create product' },
+        { error: 'Supabase not configured' },
         { status: 500 }
       )
     }
 
-    return NextResponse.json({
-      message: 'Product created successfully',
-      product: data
-    }, { status: 201 })
-  } catch (error) {
-    console.error('Server error:', error)
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    const body = await request.json()
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Product ID required' },
+        { status: 400 }
+      )
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .update(body)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json({ 
+      success: true, 
+      product: data,
+      message: 'Product updated successfully'
+    })
+  } catch (error: any) {
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error.message },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json(
+        { error: 'Supabase not configured' },
+        { status: 500 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Product ID required' },
+        { status: 400 }
+      )
+    }
+
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Product deleted successfully'
+    })
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message },
       { status: 500 }
     )
   }
