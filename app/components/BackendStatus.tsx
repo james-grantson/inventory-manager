@@ -66,7 +66,7 @@ export default function BackendStatus() {
             <div className="p-3 bg-blue-50 rounded-lg">
               <div className="flex justify-between items-center">
                 <span className="font-medium text-blue-800">Frontend</span>
-                <span className="text-green-600 text-sm">✅ Running</span>
+                <span className="text-green-600 text-sm"> Running</span>
               </div>
               <p className="text-xs text-blue-600 mt-1 break-all">
                 {typeof window !== 'undefined' ? window.location.origin : ''}
