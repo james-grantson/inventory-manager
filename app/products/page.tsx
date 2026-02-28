@@ -59,7 +59,7 @@ export default function ProductsPage() {
     }
   }
 
-  `
+  
   }
 
   const handleDelete = async (id: string) => {
@@ -220,6 +220,8 @@ export default function ProductsPage() {
     </div>
   )
 }
+
+
 
 
 
