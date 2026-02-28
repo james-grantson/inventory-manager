@@ -20,7 +20,7 @@ interface ProductFormData {
 }
 
 export default function AddProductPage() {
-  const router = useRouter()
+  const router = useRouter();
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     category: '',
@@ -33,8 +33,8 @@ export default function AddProductPage() {
     supplier: '',
     minimum_stock: 10,
     location: '',
-  })
-  const [loading, setLoading] = useState(false)
+  });
+  const [loading, setLoading] = useState(false);
   const [useCustomCategory, setUseCustomCategory] = useState(false)`n  const [error, setError] = useState('')
 
   // Auto-generate SKU on name change
@@ -355,6 +355,7 @@ export default function AddProductPage() {
     </div>
   )
 }
+
 
 
 
