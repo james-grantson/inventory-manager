@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 
@@ -17,11 +17,11 @@ export default function BackendStatus() {
   const checkBackendStatus = async () => {
     try {
       // Check health endpoint first
-      const healthRes = await fetch('https://inventory-manager-api-ghana.vercel.app/api/health')
+      const healthRes = await fetch('process.env.NEXT_PUBLIC_API_URL/api/health')
       const healthData = await healthRes.json()
       
       // Then check if products API works
-      const productsRes = await fetch('https://inventory-manager-api-ghana.vercel.app/api/products')
+      const productsRes = await fetch('process.env.NEXT_PUBLIC_API_URL/api/products')
       const productsData = await productsRes.json()
       
       setApiInfo({
@@ -72,7 +72,7 @@ export default function BackendStatus() {
             <div className="p-3 bg-blue-50 rounded-lg">
               <div className="flex justify-between items-center">
                 <span className="font-medium text-blue-800">Frontend</span>
-                <span className="text-green-600 text-sm">✅ Running</span>
+                <span className="text-green-600 text-sm">? Running</span>
               </div>
               <p className="text-xs text-blue-600 mt-1 break-all">
                 {typeof window !== 'undefined' ? window.location.origin : ''}
@@ -83,10 +83,10 @@ export default function BackendStatus() {
             <div className="p-3 bg-green-50 rounded-lg">
               <div className="flex justify-between items-center">
                 <span className="font-medium text-green-800">Backend API</span>
-                <span className="text-green-600 text-sm">✅ Connected</span>
+                <span className="text-green-600 text-sm">? Connected</span>
               </div>
               <p className="text-xs text-green-600 mt-1">
-                https://inventory-manager-api-ghana.vercel.app
+                process.env.NEXT_PUBLIC_API_URL
               </p>
             </div>
 
@@ -113,7 +113,7 @@ export default function BackendStatus() {
                 View Products
               </a>
               <a 
-                href="https://inventory-manager-api-ghana.vercel.app/api/health" 
+                href="process.env.NEXT_PUBLIC_API_URL/api/health" 
                 target="_blank"
                 className="flex-1 px-3 py-2 bg-gray-600 text-white text-center text-sm rounded hover:bg-gray-700"
               >
