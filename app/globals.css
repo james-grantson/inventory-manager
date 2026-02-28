@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -23,10 +23,10 @@
   --text-3xl: clamp(2rem, 6vw, 2.5rem);
   
   /* Responsive icon sizes */
-  --icon-sm: clamp(1rem, 3vw, 1.25rem);
-  --icon-md: clamp(1.25rem, 4vw, 1.5rem);
-  --icon-lg: clamp(1.5rem, 5vw, 2rem);
-  --icon-xl: clamp(2rem, 6vw, 2.5rem);
+  /* --icon-sm: clamp(1rem, 3vw, 1.25rem); */
+  /* --icon-md: clamp(1.25rem, 4vw, 1.5rem); */
+  /* --icon-lg: clamp(1.5rem, 5vw, 2rem); */
+  /* --icon-xl: clamp(2rem, 6vw, 2.5rem); */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -55,10 +55,10 @@ button, a {
 }
 
 /* Responsive icon sizing */
-.icon-sm { width: var(--icon-sm); height: var(--icon-sm); }
-.icon-md { width: var(--icon-md); height: var(--icon-md); }
-.icon-lg { width: var(--icon-lg); height: var(--icon-lg); }
-.icon-xl { width: var(--icon-xl); height: var(--icon-xl); }
+/* .icon-sm { width: var(--icon-sm); height: var(--icon-sm); } */
+/* .icon-md { width: var(--icon-md); height: var(--icon-md); } */
+/* .icon-lg { width: var(--icon-lg); height: var(--icon-lg); } */
+/* .icon-xl { width: var(--icon-xl); height: var(--icon-xl); } */
 
 /* Viewport height aware */
 .min-h-screen {
@@ -77,3 +77,4 @@ button, a {
     grid-template-columns: 1fr;
   }
 }
+
