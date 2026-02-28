@@ -10,13 +10,14 @@ export default function EditProductPage() {
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
     description: '',
     category: '',
-    price: '',
-    cost: '',
+    selling_price: '',
+    cost_price: '',
     quantity: '',
     minStock: '10',
     supplier: '',
@@ -44,7 +45,11 @@ export default function EditProductPage() {
   const fetchProduct = async () => {
     try {
       setLoading(true)
+      setError('')
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`)
+      if (!response.ok) throw new Error('Failed to fetch')
+      
       const data = await response.json()
       const product = data.product || data
       
@@ -53,15 +58,16 @@ export default function EditProductPage() {
         sku: product.sku || '',
         description: product.description || '',
         category: product.category || '',
-        price: product.price?.toString() || '',
-        cost: product.cost?.toString() || '',
+        selling_price: product.price?.toString() || product.selling_price?.toString() || '',
+        cost_price: product.cost?.toString() || product.cost_price?.toString() || '',
         quantity: product.quantity?.toString() || '',
         minStock: product.minStock?.toString() || '10',
         supplier: product.supplier || '',
         location: product.location || ''
       })
     } catch (error) {
-      console.error('Error fetching product:', error)
+      console.error('Error:', error)
+      setError('Failed to load product')
     } finally {
       setLoading(false)
     }
@@ -72,38 +78,60 @@ export default function EditProductPage() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const calculateProfit = () => {
+    const selling = parseFloat(formData.selling_price) || 0
+    const cost = parseFloat(formData.cost_price) || 0
+    const profit = selling - cost
+    const margin = cost > 0 ? (profit / cost) * 100 : 0
+    return { profit, margin }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
+    setError('')
 
     try {
+      // Prepare data with ALL fields including both prices
+      const updateData = {
+        name: formData.name,
+        sku: formData.sku,
+        description: formData.description,
+        category: formData.category,
+        price: parseFloat(formData.selling_price) || 0,      // API expects 'price' for selling price
+        selling_price: parseFloat(formData.selling_price) || 0,
+        cost: parseFloat(formData.cost_price) || 0,          // API expects 'cost' for cost price
+        cost_price: parseFloat(formData.cost_price) || 0,
+        quantity: parseInt(formData.quantity) || 0,
+        minStock: parseInt(formData.minStock) || 10,
+        supplier: formData.supplier,
+        location: formData.location
+      }
+
+      console.log('Sending update to backend:', updateData)
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          sku: formData.sku,
-          description: formData.description,
-          category: formData.category,
-          price: parseFloat(formData.price) || 0,
-          cost: parseFloat(formData.cost) || 0,
-          quantity: parseInt(formData.quantity) || 0,
-          minStock: parseInt(formData.minStock) || 10,
-          supplier: formData.supplier,
-          location: formData.location
-        })
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData)
       })
 
+      const responseData = await response.json()
+      console.log('Backend response:', responseData)
+      
       if (response.ok) {
-        alert('Product updated successfully!')
+        alert('? Product updated successfully!')
         router.push('/products')
+        router.refresh()
       } else {
-        const error = await response.json()
-        alert('Error: ' + (error.message || 'Failed to update'))
+        throw new Error(responseData.error || responseData.message || 'Update failed')
       }
-    } catch (error) {
-      console.error('Error updating:', error)
-      alert('Failed to update product')
+    } catch (error: any) {
+      console.error('Update error:', error)
+      setError(error.message || 'Failed to update product')
+      alert('? Error: ' + (error.message || 'Update failed'))
     } finally {
       setSaving(false)
     }
@@ -112,16 +140,25 @@ export default function EditProductPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">Loading...</div>
+        <div className="text-center">Loading product...</div>
       </div>
     )
   }
+
+  const { profit, margin } = calculateProfit()
+  const profitColor = profit >= 0 ? 'text-green-600' : 'text-red-600'
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-3xl mx-auto px-4">
         <div className="bg-white rounded-lg shadow p-6">
           <h1 className="text-2xl font-bold mb-6">Edit Product</h1>
+          
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -174,30 +211,44 @@ export default function EditProductPage() {
               </select>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Price fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Price (GHS) *</label>
+                <label className="block text-sm font-medium mb-1">Selling Price (GHS) *</label>
                 <input
                   type="number"
                   step="0.01"
-                  name="price"
-                  value={formData.price}
+                  name="selling_price"
+                  value={formData.selling_price}
                   onChange={handleChange}
                   required
                   className="w-full p-2 border rounded"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Cost Price</label>
+                <label className="block text-sm font-medium mb-1">Cost Price (GHS)</label>
                 <input
                   type="number"
                   step="0.01"
-                  name="cost"
-                  value={formData.cost}
+                  name="cost_price"
+                  value={formData.cost_price}
                   onChange={handleChange}
                   className="w-full p-2 border rounded"
                 />
               </div>
+            </div>
+
+            {/* Profit Preview */}
+            {formData.selling_price && formData.cost_price && (
+              <div className="bg-gray-50 p-3 rounded">
+                <div className="text-sm font-medium">Profit Preview:</div>
+                <div className={`text-lg font-bold ${profitColor}`}>
+                  GH{profit.toFixed(2)} ({margin.toFixed(1)}% margin)
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Quantity *</label>
                 <input
@@ -209,9 +260,6 @@ export default function EditProductPage() {
                   className="w-full p-2 border rounded"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Minimum Stock</label>
                 <input
@@ -222,6 +270,9 @@ export default function EditProductPage() {
                   className="w-full p-2 border rounded"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Supplier</label>
                 <input
@@ -232,17 +283,16 @@ export default function EditProductPage() {
                   className="w-full p-2 border rounded"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Storage Location</label>
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full p-2 border rounded"
-              />
+              <div>
+                <label className="block text-sm font-medium mb-1">Storage Location</label>
+                <input
+                  type="text"
+                  name="location"
+                  value={formData.location}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
             </div>
 
             <div className="flex gap-4 pt-4">
