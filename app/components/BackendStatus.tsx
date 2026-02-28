@@ -17,11 +17,11 @@ export default function BackendStatus() {
   const checkBackendStatus = async () => {
     try {
       // Check health endpoint first
-      const healthRes = await fetch(`${${process.env.NEXT_PUBLIC_API_URL}}/api/health)
+      const healthRes = await fetch(`$$process.env.NEXT_PUBLIC_API_URL}}/api/health)
       const healthData = await healthRes.json()
       
       // Then check if products API works
-      const productsRes = await fetch(`${${process.env.NEXT_PUBLIC_API_URL}}/api/products)
+      const productsRes = await fetch(`$$process.env.NEXT_PUBLIC_API_URL}}/api/products)
       const productsData = await productsRes.json()
       
       setApiInfo({
@@ -43,16 +43,16 @@ export default function BackendStatus() {
         onClick={() => setExpanded(!expanded)}
         className={`
           flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg cursor-pointer
-          ${status === 'checking' ? 'bg-yellow-100 text-yellow-800' : ''}
-          ${status === 'connected' ? 'bg-green-100 text-green-800' : ''}
-          ${status === 'error' ? 'bg-red-100 text-red-800' : ''}
+          $status === 'checking' ? 'bg-yellow-100 text-yellow-800' : ''}
+          $status === 'connected' ? 'bg-green-100 text-green-800' : ''}
+          $status === 'error' ? 'bg-red-100 text-red-800' : ''}
         `}
       >
         <div className={`
           w-3 h-3 rounded-full animate-pulse
-          ${status === 'checking' ? 'bg-yellow-500' : ''}
-          ${status === 'connected' ? 'bg-green-500' : ''}
-          ${status === 'error' ? 'bg-red-500' : ''}
+          $status === 'checking' ? 'bg-yellow-500' : ''}
+          $status === 'connected' ? 'bg-green-500' : ''}
+          $status === 'error' ? 'bg-red-500' : ''}
         `} />
         <span className="font-medium">
           {status === 'checking' && 'Checking Backend...'}
@@ -86,7 +86,7 @@ export default function BackendStatus() {
                 <span className="text-green-600 text-sm">? Connected</span>
               </div>
               <p className="text-xs text-green-600 mt-1">
-                ${process.env.NEXT_PUBLIC_API_URL}
+                $process.env.NEXT_PUBLIC_API_URL}
               </p>
             </div>
 
@@ -113,7 +113,7 @@ export default function BackendStatus() {
                 View Products
               </a>
               <a 
-                href="${process.env.NEXT_PUBLIC_API_URL}/api/health" 
+                href="$process.env.NEXT_PUBLIC_API_URL}/api/health" 
                 target="_blank"
                 className="flex-1 px-3 py-2 bg-gray-600 text-white text-center text-sm rounded hover:bg-gray-700"
               >
@@ -126,4 +126,5 @@ export default function BackendStatus() {
     </div>
   )
 }
+
 
