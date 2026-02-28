@@ -16,8 +16,8 @@ export default function EditProductPage() {
     sku: '',
     description: '',
     category: '',
-    selling_price: '',
-    cost_price: '',
+    price: '',        // Selling price (API uses 'price')
+    cost: '',         // Cost price (API uses 'cost')
     quantity: '',
     minStock: '10',
     supplier: '',
@@ -58,8 +58,8 @@ export default function EditProductPage() {
         sku: product.sku || '',
         description: product.description || '',
         category: product.category || '',
-        selling_price: product.price?.toString() || product.selling_price?.toString() || '',
-        cost_price: product.cost?.toString() || product.cost_price?.toString() || '',
+        price: product.price?.toString() || '',
+        cost: product.cost?.toString() || '',
         quantity: product.quantity?.toString() || '',
         minStock: product.minStock?.toString() || '10',
         supplier: product.supplier || '',
@@ -79,8 +79,8 @@ export default function EditProductPage() {
   }
 
   const calculateProfit = () => {
-    const selling = parseFloat(formData.selling_price) || 0
-    const cost = parseFloat(formData.cost_price) || 0
+    const selling = parseFloat(formData.price) || 0
+    const cost = parseFloat(formData.cost) || 0
     const profit = selling - cost
     const margin = cost > 0 ? (profit / cost) * 100 : 0
     return { profit, margin }
@@ -92,37 +92,32 @@ export default function EditProductPage() {
     setError('')
 
     try {
-      // Prepare data with ALL fields including both prices
+      // Use correct column names: 'price' and 'cost' (not 'selling_price'/'cost_price')
       const updateData = {
         name: formData.name,
         sku: formData.sku,
         description: formData.description,
         category: formData.category,
-        price: parseFloat(formData.selling_price) || 0,      // API expects 'price' for selling price
-        selling_price: parseFloat(formData.selling_price) || 0,
-        cost: parseFloat(formData.cost_price) || 0,          // API expects 'cost' for cost price
-        cost_price: parseFloat(formData.cost_price) || 0,
+        price: parseFloat(formData.price) || 0,      // API expects 'price'
+        cost: parseFloat(formData.cost) || 0,        // API expects 'cost'
         quantity: parseInt(formData.quantity) || 0,
         minStock: parseInt(formData.minStock) || 10,
         supplier: formData.supplier,
         location: formData.location
       }
 
-      console.log('Sending update to backend:', updateData)
+      console.log('Sending update:', updateData)
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`, {
         method: 'PATCH',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData)
       })
 
       const responseData = await response.json()
-      console.log('Backend response:', responseData)
       
       if (response.ok) {
-        alert('? Product updated successfully!')
+        alert(' Product updated successfully!')
         router.push('/products')
         router.refresh()
       } else {
@@ -130,8 +125,8 @@ export default function EditProductPage() {
       }
     } catch (error: any) {
       console.error('Update error:', error)
-      setError(error.message || 'Failed to update product')
-      alert('? Error: ' + (error.message || 'Update failed'))
+      setError(error.message || 'Failed to update')
+      alert(' Error: ' + (error.message || 'Update failed'))
     } finally {
       setSaving(false)
     }
@@ -140,7 +135,7 @@ export default function EditProductPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">Loading product...</div>
+        <div className="text-center">Loading...</div>
       </div>
     )
   }
@@ -211,15 +206,14 @@ export default function EditProductPage() {
               </select>
             </div>
 
-            {/* Price fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Selling Price (GHS) *</label>
                 <input
                   type="number"
                   step="0.01"
-                  name="selling_price"
-                  value={formData.selling_price}
+                  name="price"
+                  value={formData.price}
                   onChange={handleChange}
                   required
                   className="w-full p-2 border rounded"
@@ -230,16 +224,15 @@ export default function EditProductPage() {
                 <input
                   type="number"
                   step="0.01"
-                  name="cost_price"
-                  value={formData.cost_price}
+                  name="cost"
+                  value={formData.cost}
                   onChange={handleChange}
                   className="w-full p-2 border rounded"
                 />
               </div>
             </div>
 
-            {/* Profit Preview */}
-            {formData.selling_price && formData.cost_price && (
+            {formData.price && formData.cost && (
               <div className="bg-gray-50 p-3 rounded">
                 <div className="text-sm font-medium">Profit Preview:</div>
                 <div className={`text-lg font-bold ${profitColor}`}>

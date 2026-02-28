@@ -35,7 +35,7 @@ export default function AddProductPage() {
     location: '',
   })
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [useCustomCategory, setUseCustomCategory] = useState(false)`n  const [error, setError] = useState('')
 
   // Auto-generate SKU on name change
   useEffect(() => {
@@ -130,27 +130,58 @@ export default function AddProductPage() {
               </div>
 
               {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select Category</option>
-                  <option value="Agriculture">Agriculture</option>
-                  <option value="Electronics">Electronics</option>
-                  <option value="Clothing">Clothing</option>
-                  <option value="Food & Beverage">Food & Beverage</option>
-                  <option value="Construction">Construction</option>
-                  <option value="Pharmaceuticals">Pharmaceuticals</option>
-                  <option value="Automotive">Automotive</option>
-                  <option value="Office Supplies">Office Supplies</option>
-                </select>
+                          <div>
+              <label className="block text-sm font-medium mb-1">Category</label>
+              <div className="space-y-2">
+                {!useCustomCategory ? (
+                  <div className="flex gap-2">
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      className="flex-1 p-2 border rounded"
+                    >
+                      <option value="">Select Category</option>
+                      <option value="Automobile Lubricants">Automobile Lubricants</option>
+                      <option value="Automobile Parts">Automobile Parts</option>
+                      <option value="Building Materials">Building Materials</option>
+                      <option value="Automotive">Automotive</option>
+                      <option value="Electronics">Electronics</option>
+                      <option value="Clothing">Clothing</option>
+                      <option value="Food">Food</option>
+                      <option value="Beverages">Beverages</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setUseCustomCategory(true)}
+                      className="px-3 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200"
+                      title="Add custom category"
+                    >
+                       Custom
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      placeholder="Enter custom category"
+                      className="flex-1 p-2 border rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setUseCustomCategory(false)}
+                      className="px-3 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200"
+                    >
+                       Select
+                    </button>
+                  </div>
+                )}
               </div>
+            </div>
 
               {/* SKU (Auto-generated) */}
               <div>
@@ -324,4 +355,6 @@ export default function AddProductPage() {
     </div>
   )
 }
+
+
 
