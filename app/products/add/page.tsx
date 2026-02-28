@@ -15,7 +15,7 @@ export default function AddProductPage() {
     price: '',
     cost: '',
     quantity: '',
-    min_stock: '10',
+    minstock: '10',
     supplier: '',
     location: ''
   })
@@ -41,7 +41,7 @@ export default function AddProductPage() {
           price: parseFloat(formData.price) || 0,
           cost: parseFloat(formData.cost) || 0,
           quantity: parseInt(formData.quantity) || 0,
-          min_stock: parseInt(formData.min_stock) || 10,
+          minstock: parseInt(formData.minstock) || 10,
           supplier: formData.supplier,
           location: formData.location
         })
@@ -194,8 +194,8 @@ export default function AddProductPage() {
                 <label className="block text-sm font-medium mb-1">Minimum Stock</label>
                 <input
                   type="number"
-                  name="min_stock"
-                  value={formData.min_stock}
+                  name="minstock"
+                  value={formData.minstock}
                   onChange={handleChange}
                   className="w-full p-2 border rounded"
                 />
@@ -247,4 +247,5 @@ export default function AddProductPage() {
     </div>
   )
 }
+
 
