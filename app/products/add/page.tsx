@@ -1,140 +1,110 @@
-"use client"
+﻿'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import CurrencySelector, { formatCurrency } from '@/components/CurrencySelector'
-
-interface ProductFormData {
-  name: string
-  category: string
-  quantity: number
-  price: number
-  currency: string
-  sku: string
-  barcode?: string
-  description?: string
-  supplier?: string
-  minimum_stock: number
-  location?: string
-}
 
 export default function AddProductPage() {
-  const router = useRouter();
-  const [formData, setFormData] = useState<ProductFormData>({
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [useCustomCategory, setUseCustomCategory] = useState(false)
+  const [formData, setFormData] = useState({
     name: '',
-    category: '',
-    quantity: 0,
-    price: 0,
-    currency: 'GHS',
     sku: '',
-    barcode: '',
     description: '',
+    category: '',
+    price: '',
+    cost: '',
+    quantity: '',
+    minStock: '10',
     supplier: '',
-    minimum_stock: 10,
-    location: '',
-  });
-  const [loading, setLoading] = useState(false);
-  const [useCustomCategory, setUseCustomCategory] = useState(false)`n  const [error, setError] = useState('')
+    location: ''
+  })
 
-  // Auto-generate SKU on name change
-  useEffect(() => {
-    if (formData.name && !formData.sku) {
-      const sku = formData.name
-        .toUpperCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^A-Z0-9-]/g, '')
-        .substring(0, 20) + '-' + Date.now().toString().slice(-4)
-      setFormData(prev => ({ ...prev, sku }))
-    }
-  }, [formData.name])
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError('')
 
     try {
-      const response = await fetch('https://inventory-manager-api-ghana.vercel.app/api/products', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          sku: formData.sku,
+          description: formData.description,
+          category: formData.category,
+          price: parseFloat(formData.price) || 0,
+          cost: parseFloat(formData.cost) || 0,
+          quantity: parseInt(formData.quantity) || 0,
+          minStock: parseInt(formData.minStock) || 10,
+          supplier: formData.supplier,
+          location: formData.location
+        })
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to add product')
+      if (response.ok) {
+        alert('Product added successfully!')
+        router.push('/products')
       }
-
-      // Success - redirect to products page
-      router.push('/products')
-      router.refresh()
-    } catch (err: any) {
-      setError(err.message || 'An error occurred')
+    } catch (error) {
+      console.error('Error:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? parseFloat(value) || 0 : value
-    }))
-  }
-
-  const handleCurrencyChange = (currencyCode: string) => {
-    setFormData(prev => ({ ...prev, currency: currencyCode }))
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="mb-8">
-          <Link
-            href="/products"
-            className="text-blue-600 hover:text-blue-800 flex items-center"
-          >
-             Back to Products
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mt-4">Add New Product</h1>
-          <p className="text-gray-600 mt-2">Add a new item to your inventory</p>
-        </div>
+      <div className="max-w-3xl mx-auto px-4">
+        <div className="bg-white rounded-lg shadow p-6">
+          <h1 className="text-2xl font-bold mb-6">Add Product</h1>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Product Name */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Name *
-                </label>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Product Name *</label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Premium Cocoa Beans"
                   required
+                  className="w-full p-2 border rounded"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">SKU</label>
+                <input
+                  type="text"
+                  name="sku"
+                  value={formData.sku}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            </div>
 
-              {/* Category */}
-                          <div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={3}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+
+            <div>
               <label className="block text-sm font-medium mb-1">Category</label>
-              <div className="space-y-2">
+              <div className="flex gap-2">
                 {!useCustomCategory ? (
-                  <div className="flex gap-2">
+                  <>
                     <select
                       name="category"
                       value={formData.category}
@@ -155,14 +125,13 @@ export default function AddProductPage() {
                     <button
                       type="button"
                       onClick={() => setUseCustomCategory(true)}
-                      className="px-3 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200"
-                      title="Add custom category"
+                      className="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200"
                     >
-                       Custom
+                      Custom
                     </button>
-                  </div>
+                  </>
                 ) : (
-                  <div className="flex gap-2">
+                  <>
                     <input
                       type="text"
                       name="category"
@@ -174,179 +143,102 @@ export default function AddProductPage() {
                     <button
                       type="button"
                       onClick={() => setUseCustomCategory(false)}
-                      className="px-3 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200"
+                      className="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200"
                     >
-                       Select
+                      Select
                     </button>
-                  </div>
+                  </>
                 )}
               </div>
             </div>
 
-              {/* SKU (Auto-generated) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  SKU (Stock Keeping Unit)
-                </label>
+                <label className="block text-sm font-medium mb-1">Selling Price (GHS) *</label>
                 <input
-                  type="text"
-                  name="sku"
-                  value={formData.sku}
+                  type="number"
+                  step="0.01"
+                  name="price"
+                  value={formData.price}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
-                  placeholder="Auto-generated"
-                  readOnly
+                  required
+                  className="w-full p-2 border rounded"
                 />
-                <p className="text-xs text-gray-500 mt-1">Auto-generated from product name</p>
               </div>
-
-              {/* Quantity */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Quantity *
-                </label>
+                <label className="block text-sm font-medium mb-1">Cost Price (GHS)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="cost"
+                  value={formData.cost}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Quantity *</label>
                 <input
                   type="number"
                   name="quantity"
                   value={formData.quantity}
                   onChange={handleChange}
-                  min="0"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
+                  className="w-full p-2 border rounded"
                 />
               </div>
-
-              {/* Minimum Stock */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minimum Stock Level
-                </label>
+                <label className="block text-sm font-medium mb-1">Minimum Stock</label>
                 <input
                   type="number"
-                  name="minimum_stock"
-                  value={formData.minimum_stock}
+                  name="minStock"
+                  value={formData.minStock}
                   onChange={handleChange}
-                  min="0"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2 border rounded"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Alert when stock falls below this level
-                </p>
               </div>
+            </div>
 
-              {/* Price and Currency */}
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Price *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      name="price"
-                      value={formData.price}
-                      onChange={handleChange}
-                      min="0"
-                      step="0.01"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pl-12"
-                      required
-                    />
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                      {formData.currency === 'GHS' ? 'GH' : 
-                       formData.currency === 'USD' ? '$' :
-                       formData.currency === 'EUR' ? '' :
-                       formData.currency === 'GBP' ? '' :
-                       formData.currency === 'NGN' ? '' : ''}
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Total value: {formatCurrency(formData.price * formData.quantity, formData.currency)}
-                  </p>
-                </div>
-
-                <div>
-                  <CurrencySelector
-                    value={formData.currency}
-                    onChange={handleCurrencyChange}
-                    showLabel={true}
-                  />
-                </div>
-              </div>
-
-              {/* Supplier */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Supplier
-                </label>
+                <label className="block text-sm font-medium mb-1">Supplier</label>
                 <input
                   type="text"
                   name="supplier"
                   value={formData.supplier}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Supplier name"
+                  className="w-full p-2 border rounded"
                 />
               </div>
-
-              {/* Location */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Storage Location
-                </label>
+                <label className="block text-sm font-medium mb-1">Storage Location</label>
                 <input
                   type="text"
                   name="location"
                   value={formData.location}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Warehouse A, Shelf B3"
-                />
-              </div>
-
-              {/* Barcode */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Barcode
-                </label>
-                <input
-                  type="text"
-                  name="barcode"
-                  value={formData.barcode}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Optional barcode"
-                />
-              </div>
-
-              {/* Description */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Product description, notes, specifications..."
+                  className="w-full p-2 border rounded"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-              <Link
-                href="/products"
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            <div className="flex gap-4 pt-4">
+              <button
+                type="button"
+                onClick={() => router.push('/products')}
+                className="px-6 py-2 border rounded hover:bg-gray-50"
               >
                 Cancel
-              </Link>
+              </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
               >
-                {loading ? 'Adding Product...' : 'Add Product'}
+                {loading ? 'Saving...' : 'Save Product'}
               </button>
             </div>
           </form>
@@ -355,7 +247,3 @@ export default function AddProductPage() {
     </div>
   )
 }
-
-
-
-
