@@ -29,7 +29,7 @@ export default function ProductsPage() {
       setLoading(true)
       setError('')
       
-      const response = await fetch('process.env.NEXT_PUBLIC_API_URL/api/products')
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products)
       const data = await response.json()
       
       console.log('API Response:', data)
@@ -67,7 +67,7 @@ export default function ProductsPage() {
     if (!confirm('Are you sure?')) return
     
     try {
-      await fetch(`process.env.NEXT_PUBLIC_API_URL/api/products/${id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`, {
         method: 'DELETE'
       })
       fetchProducts() // Refresh the list
@@ -209,7 +209,7 @@ export default function ProductsPage() {
         {/* Debug info */}
         <div className="mt-8 p-4 bg-gray-100 rounded-lg text-sm">
           <p><strong>Debug:</strong> Products array length: {products.length}</p>
-          <p><strong>API URL:</strong> process.env.NEXT_PUBLIC_API_URL/api/products</p>
+          <p><strong>API URL:</strong> ${process.env.NEXT_PUBLIC_API_URL}/api/products</p>
           <button
             onClick={() => console.log('Products:', products)}
             className="mt-2 px-3 py-1 bg-gray-300 rounded text-xs"
@@ -221,4 +221,5 @@ export default function ProductsPage() {
     </div>
   )
 }
+
 
