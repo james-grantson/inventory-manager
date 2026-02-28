@@ -16,10 +16,10 @@ export default function EditProductPage() {
     sku: '',
     description: '',
     category: '',
-    price: '',        // Selling price (API uses 'price')
-    cost: '',         // Cost price (API uses 'cost')
+    price: '',
+    cost: '',
     quantity: '',
-    minStock: '10',
+    min_stock: '10',  // Changed from minStock to min_stock
     supplier: '',
     location: ''
   })
@@ -61,7 +61,7 @@ export default function EditProductPage() {
         price: product.price?.toString() || '',
         cost: product.cost?.toString() || '',
         quantity: product.quantity?.toString() || '',
-        minStock: product.minStock?.toString() || '10',
+        min_stock: product.min_stock?.toString() || product.minStock?.toString() || '10',
         supplier: product.supplier || '',
         location: product.location || ''
       })
@@ -92,16 +92,16 @@ export default function EditProductPage() {
     setError('')
 
     try {
-      // Use correct column names: 'price' and 'cost' (not 'selling_price'/'cost_price')
+      // Use database column names (with underscores)
       const updateData = {
         name: formData.name,
         sku: formData.sku,
         description: formData.description,
         category: formData.category,
-        price: parseFloat(formData.price) || 0,      // API expects 'price'
-        cost: parseFloat(formData.cost) || 0,        // API expects 'cost'
+        price: parseFloat(formData.price) || 0,
+        cost: parseFloat(formData.cost) || 0,
         quantity: parseInt(formData.quantity) || 0,
-        minStock: parseInt(formData.minStock) || 10,
+        min_stock: parseInt(formData.min_stock) || 10,  // Changed to min_stock
         supplier: formData.supplier,
         location: formData.location
       }
@@ -257,8 +257,8 @@ export default function EditProductPage() {
                 <label className="block text-sm font-medium mb-1">Minimum Stock</label>
                 <input
                   type="number"
-                  name="minStock"
-                  value={formData.minStock}
+                  name="min_stock"  // Changed from minStock to min_stock
+                  value={formData.min_stock}
                   onChange={handleChange}
                   className="w-full p-2 border rounded"
                 />
