@@ -59,8 +59,7 @@ export default function ProductsPage() {
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return `GH${amount.toFixed(2)}`
+  `
   }
 
   const handleDelete = async (id: string) => {
@@ -221,6 +220,8 @@ export default function ProductsPage() {
     </div>
   )
 }
+
+
 
 
 
