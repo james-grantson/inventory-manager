@@ -1,13 +1,12 @@
-﻿import type { Metadata } from 'next'
-import BackendStatus from './components/BackendStatus'
-import { Inter } from 'next/font/google'
+﻿import { Inter } from 'next/font/google'
 import './globals.css'
+import BackendStatus from '@/app/components/BackendStatus'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
-export const metadata: Metadata = {
+export const metadata = {
   title: 'Inventory Manager',
-  description: 'Inventory management system',
+  description: 'Professional inventory management system',
 }
 
 export default function RootLayout({
@@ -16,22 +15,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="stylesheet" href="/styles.css" />
-      </head>
-      <body className={inter.className}>
-        <nav className="navbar">
-          <div className="container">
-            <a href="/" className="navbar-brand"> Inventory Manager</a>
-          </div>
-        </nav>
-        <main className="py-4">
-          {children}
-        </main>
-        <BackendStatus />`n  </body>
+    <html lang="en" className={`${inter.variable}`}>
+      <body className="font-sans antialiased bg-gray-50">
+        {children}
+        <BackendStatus />
+      </body>
     </html>
   )
 }
-
-

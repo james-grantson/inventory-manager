@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -23,76 +25,139 @@ export default function DashboardPage() {
     }
   }
 
+  const formatCurrency = (amount: number) => {
+    return `GH${amount.toFixed(2)}`
+  }
+
   const totalProducts = products.length
   const totalValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0)
-  const lowStock = products.filter(p => p.quantity <= (p.minStock || 10)).length
-  const formatMoney = (amount: number) => `GH₵${amount.toFixed(2)}`
+  const lowStock = products.filter(p => p.quantity <= (p.minstock || 10)).length
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading dashboard...</div>
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* Header skeleton */}
+          <div className="space-y-2">
+            <div className="skeleton-text w-48 h-8"></div>
+            <div className="skeleton-text w-64 h-4"></div>
+          </div>
+          
+          {/* Stats skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1,2,3].map(i => (
+              <div key={i} className="dashboard-card h-32">
+                <div className="skeleton-text w-20 h-4 mb-2"></div>
+                <div className="skeleton-text w-24 h-8"></div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Products skeleton */}
+          <div className="dashboard-card">
+            <div className="skeleton-text w-32 h-6 mb-4"></div>
+            {[1,2,3].map(i => (
+              <div key={i} className="py-4 border-b border-gray-100 last:border-0">
+                <div className="flex justify-between">
+                  <div className="space-y-2 w-1/2">
+                    <div className="skeleton-text w-3/4 h-4"></div>
+                    <div className="skeleton-text w-1/2 h-3"></div>
+                  </div>
+                  <div className="skeleton-text w-20 h-8"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Full-width header with centered content */}
-      <div className="bg-white border-b border-gray-200 w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Inventory Manager</h1>
-          <p className="text-gray-600 mt-1">Welcome back, James</p>
+      {/* Header with strong typography */}
+      <header className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
+            Inventory Manager
+          </h1>
+          <p className="text-lg text-gray-500 mt-2 leading-relaxed">
+            Welcome back, James  Your inventory is up to date
+          </p>
         </div>
-      </div>
+      </header>
 
-      {/* Main content - properly centered */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Total Products</div>
-            <div className="text-4xl font-bold text-gray-900">{totalProducts}</div>
-            <div className="text-sm text-gray-500 mt-2">Active inventory items</div>
+      {/* Main content */}
+      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Stats cards with beautiful typography */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Total Products */}
+          <div className="dashboard-card group">
+            <div className="label-small mb-2">Total Products</div>
+            <div className="stat-value text-gray-900">{totalProducts}</div>
+            <div className="text-sm text-gray-500 mt-2 flex items-center">
+              <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+              +2 from last month
+            </div>
           </div>
-          
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Total Value</div>
-            <div className="text-4xl font-bold text-green-600">{formatMoney(totalValue)}</div>
-            <div className="text-sm text-gray-500 mt-2">Current stock value</div>
+
+          {/* Total Value */}
+          <div className="dashboard-card group">
+            <div className="label-small mb-2">Total Value</div>
+            <div className="stat-value text-green-600">{formatCurrency(totalValue)}</div>
+            <div className="text-sm text-gray-500 mt-2">Based on current stock</div>
           </div>
-          
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Low Stock</div>
-            <div className="text-4xl font-bold text-yellow-600">{lowStock}</div>
-            <div className="text-sm text-gray-500 mt-2">Items needing attention</div>
+
+          {/* Low Stock */}
+          <div className="dashboard-card group">
+            <div className="label-small mb-2">Low Stock Items</div>
+            <div className="stat-value text-yellow-600">{lowStock}</div>
+            <div className="text-sm text-gray-500 mt-2">Need to reorder soon</div>
           </div>
         </div>
 
-        {/* Recent Products */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-8">
-          <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-gray-800">Recent Products</h2>
-            <Link href="/products" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              View all →
+        {/* Recent Products Section */}
+        <div className="dashboard-card">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="card-title">Recent Products</h2>
+            <Link 
+              href="/products" 
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              View all 
             </Link>
           </div>
-          
-          <div className="divide-y divide-gray-50">
+
+          <div className="divide-y divide-gray-100">
             {products.slice(0, 3).map((product) => (
-              <div key={product.id} className="px-6 py-4 hover:bg-gray-50">
+              <div
+                key={product.id}
+                onClick={() => router.push(`/products/edit/${product.id}`)}
+                className="interactive-row py-4 px-2 -mx-2 rounded-lg cursor-pointer"
+              >
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{product.name}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{product.description}</p>
+                  <div className="flex-1 mb-2 md:mb-0">
+                    <h3 className="font-medium text-gray-900">{product.name}</h3>
+                    <p className="text-sm text-gray-500 mt-0.5">{product.description}</p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="text-xs text-gray-400">SKU: {product.sku}</span>
+                      {product.quantity <= (product.minstock || 10) && (
+                        <span className="status-badge status-badge-warning text-xs">
+                          Low Stock
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 mt-2 md:mt-0">
-                    <span className="text-lg font-bold text-blue-600">{formatMoney(product.price)}</span>
-                    <span className={`text-sm px-3 py-1 rounded-full ${
-                      product.quantity < 10 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {product.quantity} units
-                    </span>
+                  
+                  <div className="flex items-center gap-4 md:ml-4">
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">
+                        {formatCurrency(product.price)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {product.quantity} units
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -100,21 +165,49 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/products/add" className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-center font-medium">
-            Add New Product
+        {/* Quick Actions - Clean buttons */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Link
+            href="/products/add"
+            className="group bg-white px-4 py-3 rounded-xl text-center hover:bg-gray-50 transition-all duration-200 border border-gray-100"
+          >
+            <div className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+              Add Product
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Create new item</div>
           </Link>
-          <Link href="/products" className="px-6 py-3 bg-white text-gray-700 rounded-lg hover:bg-gray-50 text-center font-medium border border-gray-200">
-            Browse All Products
+          
+          <Link
+            href="/products"
+            className="group bg-white px-4 py-3 rounded-xl text-center hover:bg-gray-50 transition-all duration-200 border border-gray-100"
+          >
+            <div className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+              View All
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Browse inventory</div>
+          </Link>
+          
+          <Link
+            href="/reports"
+            className="group bg-white px-4 py-3 rounded-xl text-center hover:bg-gray-50 transition-all duration-200 border border-gray-100"
+          >
+            <div className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+              Reports
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Export & analyze</div>
+          </Link>
+          
+          <Link
+            href="/barcode"
+            className="group bg-white px-4 py-3 rounded-xl text-center hover:bg-gray-50 transition-all duration-200 border border-gray-100"
+          >
+            <div className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+              Barcode
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Generate codes</div>
           </Link>
         </div>
-      </div>
-
-      {/* Backend Status */}
-      <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg text-sm shadow-lg">
-        Backend: Connected
-      </div>
+      </main>
     </div>
   )
 }
