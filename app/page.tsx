@@ -3,57 +3,33 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Package, 
   DollarSign, 
   AlertTriangle, 
   Layers,
   Search,
-  Filter,
   RefreshCw,
   Edit,
   Trash2,
   TrendingUp,
-  TrendingDown,
-  Minus,
   Clock,
   ShoppingBag,
-  BarChart3,
-  PieChart,
-  Download,
-  Upload,
-  Settings,
-  Bell,
-  Sun,
-  Moon,
   X,
   CheckCircle,
   AlertCircle,
-  Info
+  Plus
 } from 'lucide-react'
 
-interface Product {
-  id: string
-  name: string
-  sku: string
-  description: string
-  category: string
-  price: number
-  cost: number
-  quantity: number
-  minstock: number
-  supplier: string
-  location: string
-  created_at?: string
-  updated_at?: string
+interface SimpleDashboardProps {
+  products?: any[]
 }
 
-export default function ProfessionalDashboard() {
+export default function SimpleDashboard({ products: externalProducts }: SimpleDashboardProps) {
   const router = useRouter()
-  const [products, setProducts] = useState<Product[]>([])
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState<any[]>(externalProducts || [])
+  const [filteredProducts, setFilteredProducts] = useState<any[]>(externalProducts || [])
+  const [loading, setLoading] = useState(!externalProducts)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [darkMode, setDarkMode] = useState(false)
@@ -80,31 +56,39 @@ export default function ProfessionalDashboard() {
 
   // Auto-refresh every 2 minutes
   useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 120000)
+    if (!externalProducts) {
+      fetchData()
+    }
+    const interval = setInterval(() => {
+      if (!externalProducts) {
+        fetchData()
+      }
+    }, 120000)
     return () => clearInterval(interval)
-  }, [])
+  }, [externalProducts])
 
   // Keyboard shortcut: Ctrl+R to refresh
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'r') {
         e.preventDefault()
-        fetchData()
+        if (!externalProducts) {
+          fetchData()
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [externalProducts])
 
   // Load dark mode preference
   useEffect(() => {
-    const savedMode = localStorage.getItem('darkMode')
+    const savedMode = localStorage.getItem('simpleDarkMode')
     if (savedMode) setDarkMode(savedMode === 'true')
   }, [])
 
   useEffect(() => {
-    localStorage.setItem('darkMode', darkMode.toString())
+    localStorage.setItem('simpleDarkMode', darkMode.toString())
     if (darkMode) {
       document.documentElement.classList.add('dark')
     } else {
@@ -125,11 +109,11 @@ export default function ProfessionalDashboard() {
       setLastUpdated(new Date())
       
       // Calculate stats
-      const totalValue = productList.reduce((sum: number, p: Product) => sum + (p.price * p.quantity), 0)
-      const totalProfit = productList.reduce((sum: number, p: Product) => sum + ((p.price - p.cost) * p.quantity), 0)
-      const lowStock = productList.filter((p: Product) => p.quantity <= p.minstock && p.quantity > 0).length
-      const outOfStock = productList.filter((p: Product) => p.quantity === 0).length
-      const categories = new Set(productList.map((p: Product) => p.category)).size
+      const totalValue = productList.reduce((sum: number, p: any) => sum + (p.price * p.quantity), 0)
+      const totalProfit = productList.reduce((sum: number, p: any) => sum + ((p.price - p.cost) * p.quantity), 0)
+      const lowStock = productList.filter((p: any) => p.quantity <= p.minstock && p.quantity > 0).length
+      const outOfStock = productList.filter((p: any) => p.quantity === 0).length
+      const categories = new Set(productList.map((p: any) => p.category)).size
 
       setStats({
         totalProducts: productList.length,
@@ -183,7 +167,7 @@ export default function ProfessionalDashboard() {
 
   const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
 
-  const getStockStatus = (product: Product) => {
+  const getStockStatus = (product: any) => {
     if (product.quantity === 0) {
       return { label: 'Out of Stock', color: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400', icon: AlertCircle }
     }
@@ -263,7 +247,7 @@ export default function ProfessionalDashboard() {
             <div className="flex items-center">
               <ShoppingBag className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Inventory Manager Pro</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Simple Inventory</h1>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {lastUpdated && `Last updated: ${lastUpdated.toLocaleTimeString()}`}
                 </p>
@@ -282,11 +266,7 @@ export default function ProfessionalDashboard() {
                 onClick={() => setDarkMode(!darkMode)}
                 className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-              <button className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                {darkMode ? '' : ''}
               </button>
             </div>
           </div>
@@ -296,12 +276,7 @@ export default function ProfessionalDashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Products</p>
@@ -311,14 +286,9 @@ export default function ProfessionalDashboard() {
                 <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Value</p>
@@ -328,14 +298,9 @@ export default function ProfessionalDashboard() {
                 <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Profit</p>
@@ -345,14 +310,9 @@ export default function ProfessionalDashboard() {
                 <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock</p>
@@ -362,14 +322,9 @@ export default function ProfessionalDashboard() {
                 <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700"
-          >
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Categories</p>
@@ -379,7 +334,7 @@ export default function ProfessionalDashboard() {
                 <Layers className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -453,6 +408,7 @@ export default function ProfessionalDashboard() {
               href="/products/add"
               className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
             >
+              <Plus className="h-5 w-5 mr-2" />
               Add New Product
             </Link>
           </div>
@@ -485,11 +441,8 @@ export default function ProfessionalDashboard() {
                     const profitColor = getProfitColor(totalProfit, profitMargin)
 
                     return (
-                      <motion.tr
+                      <tr
                         key={product.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
                         className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
                       >
                         <td className="px-6 py-4">
@@ -553,7 +506,7 @@ export default function ProfessionalDashboard() {
                             </button>
                           </div>
                         </td>
-                      </motion.tr>
+                      </tr>
                     )
                   })}
                 </tbody>
