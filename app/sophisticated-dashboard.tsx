@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, Variants } from 'framer-motion'
 import { 
   Package, 
   DollarSign, 
@@ -67,9 +67,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [stockFilter, setStockFilter] = useState('all')
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
-  const [selectedMetric, setSelectedMetric] = useState('all')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [notifications, setNotifications] = useState(5)
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -260,28 +257,10 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     return Array.from(new Set(products.map(p => p.category)))
   }, [products])
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  }
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 12
-      }
-    }
+  // Simple animation variants without complex transitions
+  const fadeInUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 }
   }
 
   if (loading) {
@@ -349,6 +328,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
             <motion.div 
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5 }}
               className="flex items-center"
             >
               <div className="relative">
@@ -372,6 +352,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
             <motion.div 
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5 }}
               className="flex items-center space-x-3"
             >
               <button
@@ -407,24 +388,21 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards - Sophisticated */}
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8"
-        >
+        {/* Stats Cards - Simple animations */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
           {[
-            { label: 'Products', value: stats.totalProducts, icon: Package, color: 'from-purple-500 to-pink-500', delay: 0.1 },
-            { label: 'Value', value: formatCurrency(stats.totalValue), icon: DollarSign, color: 'from-green-500 to-emerald-500', delay: 0.2 },
-            { label: 'Profit', value: formatCurrency(stats.totalProfit), icon: TrendingUp, color: 'from-blue-500 to-cyan-500', delay: 0.3 },
-            { label: 'Margin', value: `${stats.avgProfitMargin.toFixed(1)}%`, icon: PieChart, color: 'from-yellow-500 to-orange-500', delay: 0.4 },
-            { label: 'Low Stock', value: stats.lowStock, icon: AlertTriangle, color: 'from-red-500 to-pink-500', delay: 0.5 },
-            { label: 'Categories', value: stats.categories, icon: Layers, color: 'from-indigo-500 to-purple-500', delay: 0.6 }
+            { label: 'Products', value: stats.totalProducts, icon: Package, color: 'from-purple-500 to-pink-500' },
+            { label: 'Value', value: formatCurrency(stats.totalValue), icon: DollarSign, color: 'from-green-500 to-emerald-500' },
+            { label: 'Profit', value: formatCurrency(stats.totalProfit), icon: TrendingUp, color: 'from-blue-500 to-cyan-500' },
+            { label: 'Margin', value: `${stats.avgProfitMargin.toFixed(1)}%`, icon: PieChart, color: 'from-yellow-500 to-orange-500' },
+            { label: 'Low Stock', value: stats.lowStock, icon: AlertTriangle, color: 'from-red-500 to-pink-500' },
+            { label: 'Categories', value: stats.categories, icon: Layers, color: 'from-indigo-500 to-purple-500' }
           ].map((stat, index) => (
             <motion.div
               key={index}
-              variants={itemVariants}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
               onHoverStart={() => setHoveredCard(stat.label)}
               onHoverEnd={() => setHoveredCard(null)}
               className="relative group"
@@ -449,7 +427,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
               </div>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Search and Filters - Sophisticated */}
         <motion.div
@@ -549,12 +527,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
             </Link>
           </motion.div>
         ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProducts.map((product, index) => {
               const profitPerItem = product.price - product.cost
               const totalProfit = profitPerItem * product.quantity
@@ -566,8 +539,10 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
               return (
                 <motion.div
                   key={product.id}
-                  variants={itemVariants}
-                  whileHover={{ y: -5, scale: 1.02 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ y: -5 }}
                   className="group relative"
                 >
                   {/* Background glow effect */}
@@ -679,7 +654,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                 </motion.div>
               )
             })}
-          </motion.div>
+          </div>
         )}
 
         {/* Footer Stats */}
