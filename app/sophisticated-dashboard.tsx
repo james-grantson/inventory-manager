@@ -58,6 +58,7 @@ interface SophisticatedDashboardProps {
 export default function SophisticatedDashboard({ products: externalProducts }: SophisticatedDashboardProps) {
   const router = useRouter()
   const [products, setProducts] = useState<any[]>(externalProducts || [])
+  const [filteredProducts, setFilteredProducts] = useState<any[]>(externalProducts || [])
   const [loading, setLoading] = useState(!externalProducts)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -80,6 +81,18 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     avgProfitMargin: 0
   })
 
+  // Initialize with external products if provided
+  useEffect(() => {
+    if (externalProducts && externalProducts.length > 0) {
+      setProducts(externalProducts)
+      setFilteredProducts(externalProducts)
+      setLoading(false)
+      calculateStats(externalProducts)
+    } else {
+      fetchData()
+    }
+  }, [externalProducts])
+
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -89,17 +102,12 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     return () => clearTimeout(timer)
   }, [searchQuery, products, categoryFilter, stockFilter])
 
-  // Auto-refresh every 2 minutes
+  // Auto-refresh every 2 minutes (only when not using external products)
   useEffect(() => {
     if (!externalProducts) {
-      fetchData()
+      const interval = setInterval(fetchData, 120000)
+      return () => clearInterval(interval)
     }
-    const interval = setInterval(() => {
-      if (!externalProducts) {
-        fetchData()
-      }
-    }, 120000)
-    return () => clearInterval(interval)
   }, [externalProducts])
 
   // Keyboard shortcut: Ctrl+R to refresh
@@ -143,26 +151,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
       setFilteredProducts(productList)
       setLastUpdated(new Date())
       
-      // Calculate stats
-      const totalValue = productList.reduce((sum: number, p: any) => sum + (p.price * p.quantity), 0)
-      const totalProfit = productList.reduce((sum: number, p: any) => sum + ((p.price - p.cost) * p.quantity), 0)
-      const lowStock = productList.filter((p: any) => p.quantity <= p.minstock && p.quantity > 0).length
-      const outOfStock = productList.filter((p: any) => p.quantity === 0).length
-      const categories = new Set(productList.map((p: any) => p.category)).size
-      
-      const avgMargin = productList.length > 0 
-        ? productList.reduce((sum, p) => sum + (p.cost > 0 ? ((p.price - p.cost) / p.cost) * 100 : 0), 0) / productList.length
-        : 0
-
-      setStats({
-        totalProducts: productList.length,
-        totalValue,
-        totalProfit,
-        lowStock,
-        outOfStock,
-        categories,
-        avgProfitMargin: avgMargin
-      })
+      calculateStats(productList)
 
     } catch (error) {
       console.error('Error:', error)
@@ -170,6 +159,28 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     } finally {
       setLoading(false)
     }
+  }
+
+  const calculateStats = (productList: any[]) => {
+    const totalValue = productList.reduce((sum: number, p: any) => sum + (p.price * p.quantity), 0)
+    const totalProfit = productList.reduce((sum: number, p: any) => sum + ((p.price - p.cost) * p.quantity), 0)
+    const lowStock = productList.filter((p: any) => p.quantity <= p.minstock && p.quantity > 0).length
+    const outOfStock = productList.filter((p: any) => p.quantity === 0).length
+    const categories = new Set(productList.map((p: any) => p.category)).size
+    
+    const avgMargin = productList.length > 0 
+      ? productList.reduce((sum, p) => sum + (p.cost > 0 ? ((p.price - p.cost) / p.cost) * 100 : 0), 0) / productList.length
+      : 0
+
+    setStats({
+      totalProducts: productList.length,
+      totalValue,
+      totalProfit,
+      lowStock,
+      outOfStock,
+      categories,
+      avgProfitMargin: avgMargin
+    })
   }
 
   const filterProducts = useCallback(() => {
@@ -205,7 +216,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     setFilteredProducts(filtered)
   }, [searchQuery, products, categoryFilter, stockFilter])
 
-  const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
+  const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
 
   const getStockStatus = (product: any) => {
     if (product.quantity === 0) {
@@ -607,11 +618,11 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center gap-2 text-sm">
                             <span className="text-white/40">Supplier:</span>
-                            <span className="text-white/80">{product.supplier || '—'}</span>
+                            <span className="text-white/80">{product.supplier || ''}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <span className="text-white/40">Location:</span>
-                            <span className="text-white/80">{product.location || '—'}</span>
+                            <span className="text-white/80">{product.location || ''}</span>
                           </div>
                         </div>
 
