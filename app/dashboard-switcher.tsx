@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect } from 'react'
+import { Sparkles, Gem } from 'lucide-react'
 import SimpleDashboard from './page'
 import SophisticatedDashboard from './sophisticated-dashboard'
 
