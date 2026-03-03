@@ -25,11 +25,12 @@ interface SimpleDashboardProps {
   products?: any[]
 }
 
-export default function SimpleDashboard({ products: externalProducts }: SimpleDashboardProps) {
+// Make the component work both as a standalone page and as a component with props
+export default function SimpleDashboard({ products: externalProducts }: SimpleDashboardProps = {}) {
   const router = useRouter()
-  const [products, setProducts] = useState<any[]>(externalProducts || [])
-  const [filteredProducts, setFilteredProducts] = useState<any[]>(externalProducts || [])
-  const [loading, setLoading] = useState(!externalProducts)
+  const [products, setProducts] = useState<any[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [darkMode, setDarkMode] = useState(false)
@@ -45,6 +46,18 @@ export default function SimpleDashboard({ products: externalProducts }: SimpleDa
     categories: 0
   })
 
+  // Initialize with external products if provided
+  useEffect(() => {
+    if (externalProducts && externalProducts.length > 0) {
+      setProducts(externalProducts)
+      setFilteredProducts(externalProducts)
+      setLoading(false)
+      calculateStats(externalProducts)
+    } else {
+      fetchData()
+    }
+  }, [externalProducts])
+
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -54,17 +67,12 @@ export default function SimpleDashboard({ products: externalProducts }: SimpleDa
     return () => clearTimeout(timer)
   }, [searchQuery, products, categoryFilter, stockFilter])
 
-  // Auto-refresh every 2 minutes
+  // Auto-refresh every 2 minutes (only when not using external products)
   useEffect(() => {
     if (!externalProducts) {
-      fetchData()
+      const interval = setInterval(fetchData, 120000)
+      return () => clearInterval(interval)
     }
-    const interval = setInterval(() => {
-      if (!externalProducts) {
-        fetchData()
-      }
-    }, 120000)
-    return () => clearInterval(interval)
   }, [externalProducts])
 
   // Keyboard shortcut: Ctrl+R to refresh
@@ -107,22 +115,7 @@ export default function SimpleDashboard({ products: externalProducts }: SimpleDa
       setProducts(productList)
       setFilteredProducts(productList)
       setLastUpdated(new Date())
-      
-      // Calculate stats
-      const totalValue = productList.reduce((sum: number, p: any) => sum + (p.price * p.quantity), 0)
-      const totalProfit = productList.reduce((sum: number, p: any) => sum + ((p.price - p.cost) * p.quantity), 0)
-      const lowStock = productList.filter((p: any) => p.quantity <= p.minstock && p.quantity > 0).length
-      const outOfStock = productList.filter((p: any) => p.quantity === 0).length
-      const categories = new Set(productList.map((p: any) => p.category)).size
-
-      setStats({
-        totalProducts: productList.length,
-        totalValue,
-        totalProfit,
-        lowStock,
-        outOfStock,
-        categories
-      })
+      calculateStats(productList)
 
     } catch (error) {
       console.error('Error:', error)
@@ -130,6 +123,23 @@ export default function SimpleDashboard({ products: externalProducts }: SimpleDa
     } finally {
       setLoading(false)
     }
+  }
+
+  const calculateStats = (productList: any[]) => {
+    const totalValue = productList.reduce((sum: number, p: any) => sum + (p.price * p.quantity), 0)
+    const totalProfit = productList.reduce((sum: number, p: any) => sum + ((p.price - p.cost) * p.quantity), 0)
+    const lowStock = productList.filter((p: any) => p.quantity <= p.minstock && p.quantity > 0).length
+    const outOfStock = productList.filter((p: any) => p.quantity === 0).length
+    const categories = new Set(productList.map((p: any) => p.category)).size
+
+    setStats({
+      totalProducts: productList.length,
+      totalValue,
+      totalProfit,
+      lowStock,
+      outOfStock,
+      categories
+    })
   }
 
   const filterProducts = useCallback(() => {
