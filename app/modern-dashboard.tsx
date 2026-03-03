@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion, Variants } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { 
   Package, 
   DollarSign, 
@@ -125,7 +125,7 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
     }
   }
 
-  const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
+  const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
 
   const totalProducts = products.length
   const totalValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0)
@@ -151,38 +151,13 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
     return <TrendingUp className="h-3 w-3" />
   }
 
-  // Fixed animation variants with proper typing
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.05,
-        duration: 0.3
-      }
-    }
-  }
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        type: "spring" as const,
-        stiffness: 300,
-        damping: 20
-      }
-    }
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center">
         <div className="relative">
-          <div className="w-24 h-24 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+          <div className="w-24 h-24 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-12 h-12 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-full animate-pulse"></div>
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-full animate-pulse"></div>
           </div>
         </div>
       </div>
@@ -190,12 +165,20 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
   }
 
   return (
-    <div className={`min-h-screen transition-all duration-500 ${darkMode ? 'dark bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50'}`}>
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-300 dark:bg-purple-900 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute top-0 -right-40 w-80 h-80 bg-yellow-300 dark:bg-yellow-900 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute -bottom-40 left-20 w-80 h-80 bg-pink-300 dark:bg-pink-900 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+    <div className={`min-h-screen transition-all duration-500 ${darkMode ? 'dark' : ''}`}>
+      {/* Rich Gradient Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        {/* Animated Overlay */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+        
+        {/* Animated Blobs */}
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-300 dark:bg-purple-900 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div className="absolute top-0 -right-40 w-80 h-80 bg-yellow-300 dark:bg-yellow-900 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-40 left-20 w-80 h-80 bg-pink-300 dark:bg-pink-900 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+        
+        {/* Gradient Orbs */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full filter blur-3xl opacity-20 animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-gradient-to-r from-pink-400 to-orange-400 rounded-full filter blur-3xl opacity-20 animate-pulse animation-delay-1000"></div>
       </div>
 
       {/* Modern Sidebar */}
@@ -203,14 +186,14 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
         initial={{ x: -300 }}
         animate={{ x: 0 }}
         transition={{ duration: 0.5, type: "spring" }}
-        className={`fixed left-0 top-0 h-full ${sidebarCollapsed ? 'w-20' : 'w-64'} bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-r border-gray-200 dark:border-gray-700 shadow-2xl transition-all duration-300 z-50`}
+        className={`fixed left-0 top-0 h-full ${sidebarCollapsed ? 'w-20' : 'w-64'} bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl border-r border-white/20 dark:border-gray-700/50 shadow-2xl transition-all duration-300 z-50`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-b border-white/20 dark:border-gray-700/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
                   <Box className="h-5 w-5 text-white" />
                 </div>
                 {!sidebarCollapsed && (
@@ -225,9 +208,9 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
               </div>
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-1 hover:bg-white/10 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
-                <ChevronRight className={`h-5 w-5 text-gray-500 transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`} />
+                <ChevronRight className={`h-5 w-5 text-gray-600 dark:text-gray-300 transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`} />
               </button>
             </div>
           </div>
@@ -252,7 +235,7 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                   className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
                     item.active 
                       ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/25' 
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-white/10 dark:hover:bg-gray-700/50'
                   }`}
                 >
                   <item.icon className="h-5 w-5" />
@@ -263,20 +246,20 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
           </nav>
 
           {/* User Profile */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-t border-white/20 dark:border-gray-700/50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <User className="h-5 w-5 text-white" />
               </div>
               {!sidebarCollapsed && (
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">James Grantson</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Admin</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Admin</p>
                 </div>
               )}
               {!sidebarCollapsed && (
-                <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                  <LogOut className="h-4 w-4 text-gray-500" />
+                <button className="p-2 hover:bg-white/10 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                  <LogOut className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                 </button>
               )}
             </div>
@@ -287,36 +270,36 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
       {/* Main Content */}
       <div className={`transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
         {/* Top Bar */}
-        <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700">
+        <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-white/20 dark:border-gray-700/50">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4 flex-1">
                 <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search products, suppliers..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all"
+                    className="w-full pl-10 pr-4 py-2 bg-white/50 dark:bg-gray-700/50 border border-white/20 dark:border-gray-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white"
                   />
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors relative">
-                    <Bell className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                  <button className="p-2 hover:bg-white/10 dark:hover:bg-gray-700 rounded-lg transition-colors relative">
+                    <Bell className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                     {notifications > 0 && (
                       <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                     )}
                   </button>
-                  <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                    <Settings className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                  <button className="p-2 hover:bg-white/10 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    <Settings className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                   </button>
                   <button
                     onClick={() => setDarkMode(!darkMode)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="p-2 hover:bg-white/10 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   >
-                    {darkMode ? <Sun className="h-5 w-5 text-yellow-500" /> : <Moon className="h-5 w-5 text-gray-600" />}
+                    {darkMode ? <Sun className="h-5 w-5 text-yellow-500" /> : <Moon className="h-5 w-5 text-gray-700" />}
                   </button>
                 </div>
               </div>
@@ -325,7 +308,7 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
         </header>
 
         {/* Main Dashboard Content */}
-        <main className="p-6">
+        <main className="p-6 relative z-10">
           {/* Welcome Section */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -334,19 +317,19 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
           >
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold text-white drop-shadow-lg">
                   {greeting}, James
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-white/80 mt-1 drop-shadow">
                   Here's what's happening with your inventory today
                 </p>
               </div>
               <div className="flex gap-2">
-                <button className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:shadow-lg transition-all flex items-center gap-2">
+                <button className="px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-xl hover:bg-white/20 transition-all flex items-center gap-2">
                   <Download className="h-4 w-4" />
                   <span className="text-sm">Export</span>
                 </button>
-                <button className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all flex items-center gap-2">
+                <button className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg flex items-center gap-2">
                   <Upload className="h-4 w-4" />
                   <span className="text-sm">Import</span>
                 </button>
@@ -362,8 +345,8 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                 value: totalProducts, 
                 icon: Package, 
                 color: 'from-indigo-500 to-indigo-600',
-                bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
-                textColor: 'text-indigo-600 dark:text-indigo-400',
+                bgColor: 'bg-indigo-500/20',
+                textColor: 'text-white',
                 change: '+12.5%',
                 trend: 'up'
               },
@@ -372,8 +355,8 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                 value: formatCurrency(totalValue), 
                 icon: DollarSign, 
                 color: 'from-green-500 to-green-600',
-                bgColor: 'bg-green-50 dark:bg-green-900/20',
-                textColor: 'text-green-600 dark:text-green-400',
+                bgColor: 'bg-green-500/20',
+                textColor: 'text-white',
                 change: '+8.2%',
                 trend: 'up'
               },
@@ -382,8 +365,8 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                 value: lowStock, 
                 icon: AlertTriangle, 
                 color: 'from-yellow-500 to-yellow-600',
-                bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
-                textColor: 'text-yellow-600 dark:text-yellow-400',
+                bgColor: 'bg-yellow-500/20',
+                textColor: 'text-white',
                 change: '-3.1%',
                 trend: 'down'
               },
@@ -392,8 +375,8 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                 value: Object.keys(categories).length, 
                 icon: Layers, 
                 color: 'from-purple-500 to-purple-600',
-                bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-                textColor: 'text-purple-600 dark:text-purple-400',
+                bgColor: 'bg-purple-500/20',
+                textColor: 'text-white',
                 change: '+2',
                 trend: 'up'
               }
@@ -402,25 +385,25 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                 key={index}
                 className="group relative"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-white/50 to-transparent dark:from-gray-800/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+                <div className="absolute inset-0 bg-white/5 dark:bg-gray-800/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-sm" />
+                <div className="relative bg-white/10 dark:bg-gray-800/10 backdrop-blur-md rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 border border-white/20 dark:border-gray-700/50">
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 ${stat.bgColor} rounded-xl`}>
-                      <stat.icon className={`h-6 w-6 ${stat.textColor}`} />
+                    <div className={`p-3 ${stat.bgColor} rounded-xl backdrop-blur-sm`}>
+                      <stat.icon className="h-6 w-6 text-white" />
                     </div>
                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                       stat.trend === 'up' 
-                        ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400' 
-                        : 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+                        ? 'bg-green-500/20 text-green-200' 
+                        : 'bg-red-500/20 text-red-200'
                     }`}>
                       {stat.change}
                     </span>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{stat.label}</div>
+                    <div className="text-2xl font-bold text-white">{stat.value}</div>
+                    <div className="text-sm text-white/70 mt-1">{stat.label}</div>
                   </div>
-                  <div className="mt-4 h-1 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="mt-4 h-1 bg-white/10 rounded-full overflow-hidden">
                     <div 
                       className={`h-full bg-gradient-to-r ${stat.color} rounded-full`}
                       style={{ width: '100%' }}
@@ -434,33 +417,33 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Category Distribution Card */}
-            <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="lg:col-span-2 bg-white/10 dark:bg-gray-800/10 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 dark:border-gray-700/50">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                  <PieChart className="h-5 w-5 text-indigo-500" />
+                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <PieChart className="h-5 w-5 text-indigo-300" />
                   Category Distribution
                 </h2>
-                <select className="px-3 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm">
-                  <option>This Month</option>
-                  <option>This Quarter</option>
-                  <option>This Year</option>
+                <select className="px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-sm text-white">
+                  <option className="bg-gray-800 text-white">This Month</option>
+                  <option className="bg-gray-800 text-white">This Quarter</option>
+                  <option className="bg-gray-800 text-white">This Year</option>
                 </select>
               </div>
               <div className="space-y-4">
                 {Object.entries(categories).map(([category, count]: [string, any], index) => (
                   <div key={category}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{category}</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">{count} products</span>
+                      <span className="text-sm font-medium text-white">{category}</span>
+                      <span className="text-sm text-white/70">{count} products</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+                          className="h-full bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full"
                           style={{ width: `${(count / totalProducts) * 100}%` }}
                         />
                       </div>
-                      <span className="text-xs text-gray-500">{Math.round((count / totalProducts) * 100)}%</span>
+                      <span className="text-xs text-white/70">{Math.round((count / totalProducts) * 100)}%</span>
                     </div>
                   </div>
                 ))}
@@ -468,23 +451,23 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
             </div>
 
             {/* Stock Health Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-6">
-                <Activity className="h-5 w-5 text-indigo-500" />
+            <div className="bg-white/10 dark:bg-gray-800/10 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20 dark:border-gray-700/50">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-6">
+                <Activity className="h-5 w-5 text-indigo-300" />
                 Stock Health
               </h2>
               <div className="space-y-6">
                 <div className="relative pt-1">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Healthy</span>
+                      <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                      <span className="text-sm text-white">Healthy</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">{healthyStock}</span>
+                    <span className="text-sm font-medium text-white">{healthyStock}</span>
                   </div>
-                  <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full"
+                      className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full"
                       style={{ width: `${(healthyStock / totalProducts) * 100}%` }}
                     />
                   </div>
@@ -493,14 +476,14 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                 <div className="relative pt-1">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Low Stock</span>
+                      <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                      <span className="text-sm text-white">Low Stock</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">{lowStock}</span>
+                    <span className="text-sm font-medium text-white">{lowStock}</span>
                   </div>
-                  <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full"
+                      className="h-full bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full"
                       style={{ width: `${(lowStock / totalProducts) * 100}%` }}
                     />
                   </div>
@@ -509,23 +492,23 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                 <div className="relative pt-1">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Out of Stock</span>
+                      <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                      <span className="text-sm text-white">Out of Stock</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">{outOfStock}</span>
+                    <span className="text-sm font-medium text-white">{outOfStock}</span>
                   </div>
-                  <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full"
+                      className="h-full bg-gradient-to-r from-red-400 to-red-500 rounded-full"
                       style={{ width: `${(outOfStock / totalProducts) * 100}%` }}
                     />
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl">
+                <div className="mt-6 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Overall Health</span>
-                    <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                    <span className="text-sm text-white">Overall Health</span>
+                    <span className="text-lg font-bold text-white">
                       {Math.round((healthyStock / totalProducts) * 100)}%
                     </span>
                   </div>
@@ -535,21 +518,21 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
           </div>
 
           {/* Recent Products Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="bg-white/10 dark:bg-gray-800/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 overflow-hidden">
+            <div className="p-6 border-b border-white/20 dark:border-gray-700/50">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                  <ShoppingBag className="h-5 w-5 text-indigo-500" />
+                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <ShoppingBag className="h-5 w-5 text-indigo-300" />
                   Recent Products
                 </h2>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                   >
-                    {viewMode === 'grid' ? <List className="h-5 w-5" /> : <Grid className="h-5 w-5" />}
+                    {viewMode === 'grid' ? <List className="h-5 w-5 text-white" /> : <Grid className="h-5 w-5 text-white" />}
                   </button>
-                  <Link href="/products" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1">
+                  <Link href="/products" className="text-sm text-indigo-300 hover:text-indigo-200 flex items-center gap-1">
                     View all <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
@@ -558,21 +541,21 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
             
             <div className={viewMode === 'grid' 
               ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6'
-              : 'divide-y divide-gray-200 dark:divide-gray-700'
+              : 'divide-y divide-white/20 dark:divide-gray-700/50'
             }>
               {products.slice(0, 6).map((product, index) => (
                 <div
                   key={product.id}
                   onClick={() => router.push(`/products/edit/${product.id}`)}
                   className={viewMode === 'grid'
-                    ? 'group p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:shadow-lg transition-all cursor-pointer border border-gray-200 dark:border-gray-600'
-                    : 'p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors'
+                    ? 'group p-4 bg-white/5 dark:bg-gray-800/5 rounded-xl hover:bg-white/10 transition-all cursor-pointer border border-white/20 dark:border-gray-700/50'
+                    : 'p-4 hover:bg-white/5 cursor-pointer transition-colors'
                   }
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        <h3 className="font-medium text-white group-hover:text-indigo-300 transition-colors">
                           {product.name}
                         </h3>
                         <div className={`px-2 py-0.5 rounded-full text-xs font-medium text-white bg-gradient-to-r ${getStockColor(product.quantity, product.minstock)} flex items-center gap-1`}>
@@ -580,8 +563,8 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                           {product.quantity === 0 ? 'Out' : product.quantity <= (product.minstock || 10) ? 'Low' : 'In'}
                         </div>
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{product.description}</p>
-                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 dark:text-gray-500">
+                      <p className="text-sm text-white/70 line-clamp-1">{product.description}</p>
+                      <div className="flex items-center gap-2 mt-2 text-xs text-white/50">
                         <span>SKU: {product.sku}</span>
                         <span></span>
                         <span>{product.category}</span>
@@ -589,8 +572,8 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                     </div>
                     
                     <div className="text-right ml-4">
-                      <div className="font-semibold text-gray-900 dark:text-white">{formatCurrency(product.price)}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{product.quantity} units</div>
+                      <div className="font-semibold text-white">{formatCurrency(product.price)}</div>
+                      <div className="text-sm text-white/70">{product.quantity} units</div>
                     </div>
                   </div>
                 </div>
@@ -609,15 +592,15 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
               <div key={index}>
                 <Link
                   href={action.href}
-                  className="group block bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all text-center"
+                  className="group block bg-white/10 dark:bg-gray-800/10 backdrop-blur-md rounded-xl p-4 border border-white/20 dark:border-gray-700/50 hover:bg-white/20 transition-all text-center"
                 >
                   <div className={`w-14 h-14 mx-auto mb-3 bg-gradient-to-r ${action.color} rounded-xl flex items-center justify-center shadow-lg`}>
                     <action.icon className="h-7 w-7 text-white" />
                   </div>
-                  <h3 className="font-medium text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  <h3 className="font-medium text-white group-hover:text-indigo-300 transition-colors">
                     {action.label}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{action.desc}</p>
+                  <p className="text-xs text-white/70 mt-1">{action.desc}</p>
                 </Link>
               </div>
             ))}
@@ -640,6 +623,9 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
         }
         .animation-delay-4000 {
           animation-delay: 4s;
+        }
+        .animation-delay-1000 {
+          animation-delay: 1s;
         }
       `}</style>
     </div>
