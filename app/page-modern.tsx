@@ -4,28 +4,35 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-export default function ModernDashboard() {
+interface ModernDashboardProps {
+  products?: any[]
+}
+
+export default function ModernDashboard({ products: externalProducts }: ModernDashboardProps) {
   const router = useRouter()
-  const [products, setProducts] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState<any[]>(externalProducts || [])
+  const [loading, setLoading] = useState(!externalProducts)
   const [greeting, setGreeting] = useState('')
   const [currentTime, setCurrentTime] = useState('')
 
   useEffect(() => {
+    if (!externalProducts) {
+      fetchData()
+    }
+
     const hour = new Date().getHours()
     if (hour < 12) setGreeting('Good Morning')
     else if (hour < 18) setGreeting('Good Afternoon')
     else setGreeting('Good Evening')
     
     setCurrentTime(new Date().toLocaleTimeString())
-    fetchData()
     
     const timer = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString())
     }, 1000)
     
     return () => clearInterval(timer)
-  }, [])
+  }, [externalProducts])
 
   const fetchData = async () => {
     try {
