@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Sparkles, Gem } from 'lucide-react'
-import SimpleDashboard from './page'
+import { SimpleDashboard } from './components/SimpleDashboard'
 import SophisticatedDashboard from './sophisticated-dashboard'
 
 export default function DashboardPage() {
