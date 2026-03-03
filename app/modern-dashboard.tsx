@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, Variants } from 'framer-motion'
 import { 
   Package, 
   DollarSign, 
@@ -69,7 +69,6 @@ export default function UltraModernDashboard({ products: externalProducts }: Ult
       }))
     }, 1000)
 
-    // Load dark mode preference
     const savedMode = localStorage.getItem('ultraModernDarkMode')
     if (savedMode) setDarkMode(savedMode === 'true')
 
@@ -123,7 +122,8 @@ export default function UltraModernDashboard({ products: externalProducts }: Ult
     return <TrendingUp className="h-3 w-3" />
   }
 
-  const containerVariants = {
+  // Fixed animation variants with proper typing
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -134,15 +134,15 @@ export default function UltraModernDashboard({ products: externalProducts }: Ult
     }
   }
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
       y: 0,
-      opacity: 1,
       transition: { 
-        type: "spring", 
-        stiffness: 300, 
-        damping: 20 
+        type: "spring",
+        stiffness: 300,
+        damping: 20
       }
     }
   }
@@ -271,7 +271,7 @@ export default function UltraModernDashboard({ products: externalProducts }: Ult
             ))}
           </div>
 
-          {/* Stock Health Overview with Interactive Filters */}
+          {/* Stock Health Overview */}
           <motion.div variants={itemVariants} className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -325,7 +325,7 @@ export default function UltraModernDashboard({ products: externalProducts }: Ult
             </div>
           </motion.div>
 
-          {/* Category Distribution with Animated Bars */}
+          {/* Category Distribution */}
           <motion.div variants={itemVariants} className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
               <BarChart3 className="h-5 w-5 text-blue-500" />
@@ -356,7 +356,7 @@ export default function UltraModernDashboard({ products: externalProducts }: Ult
             </div>
           </motion.div>
 
-          {/* Recent Products with Toggleable View */}
+          {/* Recent Products */}
           <motion.div variants={itemVariants} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -413,7 +413,7 @@ export default function UltraModernDashboard({ products: externalProducts }: Ult
             </div>
           </motion.div>
 
-          {/* Quick Actions Grid */}
+          {/* Quick Actions */}
           <motion.div 
             variants={itemVariants}
             className="grid grid-cols-2 md:grid-cols-4 gap-3"
