@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { useState, useEffect } from 'react'
-import ModernDashboard from './modern-dashboard'
+import ModernDashboard from './page-modern'
 import ClassicDashboard from './classic-dashboard'
 
 export default function DashboardPage() {
@@ -62,3 +62,4 @@ export default function DashboardPage() {
     </>
   )
 }
+
