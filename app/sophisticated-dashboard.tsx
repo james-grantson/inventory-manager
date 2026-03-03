@@ -3,20 +3,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion, Variants } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { 
   Package, 
   DollarSign, 
   AlertTriangle, 
   Layers,
   Search,
-  Filter,
   RefreshCw,
   Edit,
   Trash2,
   TrendingUp,
-  TrendingDown,
-  Minus,
   Clock,
   ShoppingBag,
   BarChart3,
@@ -30,23 +27,10 @@ import {
   X,
   CheckCircle,
   AlertCircle,
-  Info,
   Sparkles,
-  Zap,
-  Shield,
-  Globe,
-  Heart,
-  Star,
-  Award,
   Gem,
-  Crown,
-  Rocket,
-  Coffee,
-  Gift,
-  Wind,
-  Feather,
-  Droplet,
   Flame,
+  Droplet,
   Leaf,
   Plus
 } from 'lucide-react'
@@ -67,7 +51,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [stockFilter, setStockFilter] = useState('all')
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
-  const [notifications, setNotifications] = useState(5)
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalValue: 0,
@@ -95,11 +78,10 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     const timer = setTimeout(() => {
       filterProducts()
     }, 300)
-
     return () => clearTimeout(timer)
   }, [searchQuery, products, categoryFilter, stockFilter])
 
-  // Auto-refresh every 2 minutes (only when not using external products)
+  // Auto-refresh every 2 minutes
   useEffect(() => {
     if (!externalProducts) {
       const interval = setInterval(fetchData, 120000)
@@ -147,7 +129,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
       setProducts(productList)
       setFilteredProducts(productList)
       setLastUpdated(new Date())
-      
       calculateStats(productList)
 
     } catch (error) {
@@ -183,7 +164,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
   const filterProducts = useCallback(() => {
     let filtered = [...products]
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(p => 
@@ -191,17 +171,14 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
         p.sku?.toLowerCase().includes(query) ||
         p.category?.toLowerCase().includes(query) ||
         p.supplier?.toLowerCase().includes(query) ||
-        p.location?.toLowerCase().includes(query) ||
-        p.description?.toLowerCase().includes(query)
+        p.location?.toLowerCase().includes(query)
       )
     }
 
-    // Category filter
     if (categoryFilter !== 'all') {
       filtered = filtered.filter(p => p.category === categoryFilter)
     }
 
-    // Stock filter
     if (stockFilter === 'low') {
       filtered = filtered.filter(p => p.quantity <= p.minstock && p.quantity > 0)
     } else if (stockFilter === 'out') {
@@ -217,15 +194,15 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
 
   const getStockStatus = (product: any) => {
     if (product.quantity === 0) {
-      return { label: 'Critical', color: 'from-red-500 to-pink-500', icon: Flame, bgColor: 'bg-red-500/20' }
+      return { label: 'Critical', color: 'from-red-500 to-pink-500', icon: Flame }
     }
     if (product.quantity <= product.minstock) {
-      return { label: 'Warning', color: 'from-yellow-500 to-orange-500', icon: AlertTriangle, bgColor: 'bg-yellow-500/20' }
+      return { label: 'Warning', color: 'from-yellow-500 to-orange-500', icon: AlertTriangle }
     }
     if (product.quantity <= product.minstock * 2) {
-      return { label: 'Fair', color: 'from-blue-500 to-cyan-500', icon: Droplet, bgColor: 'bg-blue-500/20' }
+      return { label: 'Fair', color: 'from-blue-500 to-cyan-500', icon: Droplet }
     }
-    return { label: 'Excellent', color: 'from-green-500 to-emerald-500', icon: Leaf, bgColor: 'bg-green-500/20' }
+    return { label: 'Excellent', color: 'from-green-500 to-emerald-500', icon: Leaf }
   }
 
   const getProfitColor = (margin: number) => {
@@ -242,7 +219,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     setStockFilter('all')
   }
 
-  // Handle Escape key to clear search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -257,12 +233,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     return Array.from(new Set(products.map(p => p.category)))
   }, [products])
 
-  // Simple animation variants without complex transitions
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center">
@@ -271,9 +241,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-full animate-pulse"></div>
           </div>
-          <p className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 text-white/80 whitespace-nowrap">
-            Loading sophisticated dashboard...
-          </p>
         </div>
       </div>
     )
@@ -372,23 +339,13 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                 <Bell className="h-5 w-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
               </button>
-              <div className="w-px h-8 bg-white/20 mx-2"></div>
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold">JG</span>
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-white font-medium">James Grantson</p>
-                  <p className="text-white/60 text-xs">Premium Admin</p>
-                </div>
-              </div>
             </motion.div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards - Simple animations */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
           {[
             { label: 'Products', value: stats.totalProducts, icon: Package, color: 'from-purple-500 to-pink-500' },
@@ -403,8 +360,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              onHoverStart={() => setHoveredCard(stat.label)}
-              onHoverEnd={() => setHoveredCard(null)}
+              whileHover={{ y: -5 }}
               className="relative group"
             >
               <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl`}></div>
@@ -421,15 +377,12 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                   <p className="text-2xl font-bold text-white">{stat.value}</p>
                   <p className="text-sm text-white/60 mt-1">{stat.label}</p>
                 </div>
-                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Sparkles className="h-4 w-4 text-yellow-300" />
-                </div>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Search and Filters - Sophisticated */}
+        {/* Search and Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -462,9 +415,9 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 className="px-4 py-4 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 text-white appearance-none min-w-[160px]"
               >
-                <option value="all" className="bg-gray-800">All Categories</option>
+                <option value="all">All Categories</option>
                 {uniqueCategories.map(cat => (
-                  <option key={cat} value={cat} className="bg-gray-800">{cat}</option>
+                  <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
 
@@ -473,10 +426,10 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                 onChange={(e) => setStockFilter(e.target.value)}
                 className="px-4 py-4 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 text-white appearance-none min-w-[140px]"
               >
-                <option value="all" className="bg-gray-800">All Stock</option>
-                <option value="healthy" className="bg-gray-800">Healthy</option>
-                <option value="low" className="bg-gray-800">Low Stock</option>
-                <option value="out" className="bg-gray-800">Out of Stock</option>
+                <option value="all">All Stock</option>
+                <option value="healthy">Healthy</option>
+                <option value="low">Low Stock</option>
+                <option value="out">Out of Stock</option>
               </select>
 
               <button
@@ -500,7 +453,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
           </div>
         </motion.div>
 
-        {/* Products Display - Sophisticated Cards */}
+        {/* Products Grid */}
         {filteredProducts.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -516,7 +469,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
             </div>
             <h3 className="text-2xl font-bold text-white mb-3">No products found</h3>
             <p className="text-white/60 mb-8 max-w-md mx-auto">
-              {searchQuery ? 'Try adjusting your search or filters for better results' : 'Add your first product to start managing your sophisticated inventory'}
+              {searchQuery ? 'Try adjusting your search or filters' : 'Add your first product to get started'}
             </p>
             <Link
               href="/products/add"
@@ -545,18 +498,13 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                   whileHover={{ y: -5 }}
                   className="group relative"
                 >
-                  {/* Background glow effect */}
                   <div className={`absolute inset-0 bg-gradient-to-r ${stockStatus.color} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl`}></div>
                   
-                  {/* Main card */}
                   <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
-                    {/* Header with status */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-300 group-hover:to-pink-300 transition-all">
-                            {product.name}
-                          </h3>
+                          <h3 className="text-lg font-semibold text-white">{product.name}</h3>
                           <div className={`px-3 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${stockStatus.color} flex items-center gap-1`}>
                             <StockIcon className="h-3 w-3" />
                             {stockStatus.label}
@@ -564,12 +512,10 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                         </div>
                         <p className="text-sm text-white/60 line-clamp-2 mb-3">{product.description}</p>
                         
-                        {/* SKU Badge */}
                         <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 border border-white/20 mb-3">
                           <span className="text-xs text-white/80">SKU: {product.sku}</span>
                         </div>
 
-                        {/* Details Grid */}
                         <div className="grid grid-cols-2 gap-3 mb-4">
                           <div className="bg-white/5 rounded-xl p-3">
                             <p className="text-xs text-white/40 mb-1">Price</p>
@@ -589,7 +535,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                           </div>
                         </div>
 
-                        {/* Supplier & Location */}
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center gap-2 text-sm">
                             <span className="text-white/40">Supplier:</span>
@@ -601,7 +546,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                           </div>
                         </div>
 
-                        {/* Profit Section */}
                         <div className={`p-4 rounded-xl bg-gradient-to-r ${profitGradient} bg-opacity-10 border border-white/20`}>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm text-white/80">Total Profit</span>
@@ -609,7 +553,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-white/80">Margin</span>
-                            <span className={`text-sm font-semibold px-3 py-1 rounded-full bg-white/20 text-white`}>
+                            <span className="text-sm font-semibold px-3 py-1 rounded-full bg-white/20 text-white">
                               {profitMargin.toFixed(1)}%
                             </span>
                           </div>
@@ -617,7 +561,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/20">
                       <button
                         onClick={() => router.push(`/products/edit/${product.id}`)}
@@ -646,7 +589,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                       </button>
                     </div>
 
-                    {/* Decorative elements */}
                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Sparkles className="h-4 w-4 text-yellow-300" />
                     </div>
@@ -677,7 +619,11 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"></div>
-                  <span className="text-white/60 text-sm">Healthy</span>
+                  <span className="text-white/60 text-sm">Excellent</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                  <span className="text-white/60 text-sm">Fair</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500"></div>
@@ -688,16 +634,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                   <span className="text-white/60 text-sm">Critical</span>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-white/80 hover:text-white transition-all text-sm flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Export
-              </button>
-              <button className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-white/80 hover:text-white transition-all text-sm flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                Import
-              </button>
             </div>
           </div>
         </motion.div>
