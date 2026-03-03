@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, Variants } from 'framer-motion'
 import { 
   Package, 
   DollarSign, 
@@ -125,7 +125,7 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
     }
   }
 
-  const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
+  const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
 
   const totalProducts = products.length
   const totalValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0)
@@ -151,7 +151,8 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
     return <TrendingUp className="h-3 w-3" />
   }
 
-  const containerVariants = {
+  // Fixed animation variants with proper typing
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -162,13 +163,13 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
     }
   }
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
       opacity: 1, 
       y: 0,
       transition: { 
-        type: "spring",
+        type: "spring" as const,
         stiffness: 300,
         damping: 20
       }
@@ -354,12 +355,7 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
           </motion.div>
 
           {/* Stats Grid */}
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {[
               { 
                 label: 'Total Products', 
@@ -402,10 +398,8 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                 trend: 'up'
               }
             ].map((stat, index) => (
-              <motion.div
+              <div
                 key={index}
-                variants={itemVariants}
-                whileHover={{ y: -5 }}
                 className="group relative"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/50 to-transparent dark:from-gray-800/50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -427,25 +421,20 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                     <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{stat.label}</div>
                   </div>
                   <div className="mt-4 h-1 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <motion.div 
+                    <div 
                       className={`h-full bg-gradient-to-r ${stat.color} rounded-full`}
-                      initial={{ width: 0 }}
-                      animate={{ width: '100%' }}
-                      transition={{ duration: 1, delay: index * 0.1 }}
+                      style={{ width: '100%' }}
                     />
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
 
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Category Distribution Card */}
-            <motion.div 
-              variants={itemVariants}
-              className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700"
-            >
+            <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                   <PieChart className="h-5 w-5 text-indigo-500" />
@@ -459,37 +448,27 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
               </div>
               <div className="space-y-4">
                 {Object.entries(categories).map(([category, count]: [string, any], index) => (
-                  <motion.div
-                    key={category}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
+                  <div key={category}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{category}</span>
                       <span className="text-sm text-gray-500 dark:text-gray-400">{count} products</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <motion.div 
+                        <div 
                           className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${(count / totalProducts) * 100}%` }}
-                          transition={{ duration: 1, delay: index * 0.1 }}
+                          style={{ width: `${(count / totalProducts) * 100}%` }}
                         />
                       </div>
                       <span className="text-xs text-gray-500">{Math.round((count / totalProducts) * 100)}%</span>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
 
             {/* Stock Health Card */}
-            <motion.div 
-              variants={itemVariants}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700"
-            >
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-6">
                 <Activity className="h-5 w-5 text-indigo-500" />
                 Stock Health
@@ -504,11 +483,9 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                     <span className="text-sm font-medium text-gray-900 dark:text-white">{healthyStock}</span>
                   </div>
                   <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <motion.div 
+                    <div 
                       className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(healthyStock / totalProducts) * 100}%` }}
-                      transition={{ duration: 1 }}
+                      style={{ width: `${(healthyStock / totalProducts) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -522,11 +499,9 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                     <span className="text-sm font-medium text-gray-900 dark:text-white">{lowStock}</span>
                   </div>
                   <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <motion.div 
+                    <div 
                       className="h-full bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(lowStock / totalProducts) * 100}%` }}
-                      transition={{ duration: 1 }}
+                      style={{ width: `${(lowStock / totalProducts) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -540,11 +515,9 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                     <span className="text-sm font-medium text-gray-900 dark:text-white">{outOfStock}</span>
                   </div>
                   <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <motion.div 
+                    <div 
                       className="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(outOfStock / totalProducts) * 100}%` }}
-                      transition={{ duration: 1 }}
+                      style={{ width: `${(outOfStock / totalProducts) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -558,14 +531,11 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* Recent Products Section */}
-          <motion.div 
-            variants={itemVariants}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden"
-          >
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -591,11 +561,8 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
               : 'divide-y divide-gray-200 dark:divide-gray-700'
             }>
               {products.slice(0, 6).map((product, index) => (
-                <motion.div
+                <div
                   key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
                   onClick={() => router.push(`/products/edit/${product.id}`)}
                   className={viewMode === 'grid'
                     ? 'group p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:shadow-lg transition-all cursor-pointer border border-gray-200 dark:border-gray-600'
@@ -626,27 +593,20 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                       <div className="text-sm text-gray-500 dark:text-gray-400">{product.quantity} units</div>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Quick Actions Grid */}
-          <motion.div 
-            variants={itemVariants}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6"
-          >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
             {[
               { href: '/products/add', icon: Plus, label: 'Add Product', desc: 'Create new item', color: 'from-indigo-500 to-indigo-600' },
               { href: '/products', icon: Package, label: 'Manage', desc: 'Edit & update', color: 'from-purple-500 to-purple-600' },
               { href: '/reports', icon: FileText, label: 'Reports', desc: 'Export data', color: 'from-green-500 to-green-600' },
               { href: '/barcode', icon: Barcode, label: 'Barcode', desc: 'Generate codes', color: 'from-yellow-500 to-yellow-600' }
             ].map((action, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ y: -5 }}
-                whileTap={{ scale: 0.98 }}
-              >
+              <div key={index}>
                 <Link
                   href={action.href}
                   className="group block bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all text-center"
@@ -659,9 +619,9 @@ export default function PremiumDashboard({ products: externalProducts }: Premium
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{action.desc}</p>
                 </Link>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </main>
       </div>
 
