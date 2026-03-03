@@ -47,30 +47,18 @@ import {
   Feather,
   Droplet,
   Flame,
-  Leaf
+  Leaf,
+  Plus
 } from 'lucide-react'
 
-interface Product {
-  id: string
-  name: string
-  sku: string
-  description: string
-  category: string
-  price: number
-  cost: number
-  quantity: number
-  minstock: number
-  supplier: string
-  location: string
-  created_at?: string
-  updated_at?: string
+interface SophisticatedDashboardProps {
+  products?: any[]
 }
 
-export default function SophisticatedDashboard() {
+export default function SophisticatedDashboard({ products: externalProducts }: SophisticatedDashboardProps) {
   const router = useRouter()
-  const [products, setProducts] = useState<Product[]>([])
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const [products, setProducts] = useState<any[]>(externalProducts || [])
+  const [loading, setLoading] = useState(!externalProducts)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [darkMode, setDarkMode] = useState(false)
@@ -103,22 +91,30 @@ export default function SophisticatedDashboard() {
 
   // Auto-refresh every 2 minutes
   useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 120000)
+    if (!externalProducts) {
+      fetchData()
+    }
+    const interval = setInterval(() => {
+      if (!externalProducts) {
+        fetchData()
+      }
+    }, 120000)
     return () => clearInterval(interval)
-  }, [])
+  }, [externalProducts])
 
   // Keyboard shortcut: Ctrl+R to refresh
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'r') {
         e.preventDefault()
-        fetchData()
+        if (!externalProducts) {
+          fetchData()
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [externalProducts])
 
   // Load dark mode preference
   useEffect(() => {
@@ -148,11 +144,11 @@ export default function SophisticatedDashboard() {
       setLastUpdated(new Date())
       
       // Calculate stats
-      const totalValue = productList.reduce((sum: number, p: Product) => sum + (p.price * p.quantity), 0)
-      const totalProfit = productList.reduce((sum: number, p: Product) => sum + ((p.price - p.cost) * p.quantity), 0)
-      const lowStock = productList.filter((p: Product) => p.quantity <= p.minstock && p.quantity > 0).length
-      const outOfStock = productList.filter((p: Product) => p.quantity === 0).length
-      const categories = new Set(productList.map((p: Product) => p.category)).size
+      const totalValue = productList.reduce((sum: number, p: any) => sum + (p.price * p.quantity), 0)
+      const totalProfit = productList.reduce((sum: number, p: any) => sum + ((p.price - p.cost) * p.quantity), 0)
+      const lowStock = productList.filter((p: any) => p.quantity <= p.minstock && p.quantity > 0).length
+      const outOfStock = productList.filter((p: any) => p.quantity === 0).length
+      const categories = new Set(productList.map((p: any) => p.category)).size
       
       const avgMargin = productList.length > 0 
         ? productList.reduce((sum, p) => sum + (p.cost > 0 ? ((p.price - p.cost) / p.cost) * 100 : 0), 0) / productList.length
@@ -209,9 +205,9 @@ export default function SophisticatedDashboard() {
     setFilteredProducts(filtered)
   }, [searchQuery, products, categoryFilter, stockFilter])
 
-  const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
+  const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
 
-  const getStockStatus = (product: Product) => {
+  const getStockStatus = (product: any) => {
     if (product.quantity === 0) {
       return { label: 'Critical', color: 'from-red-500 to-pink-500', icon: Flame, bgColor: 'bg-red-500/20' }
     }
@@ -611,11 +607,11 @@ export default function SophisticatedDashboard() {
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center gap-2 text-sm">
                             <span className="text-white/40">Supplier:</span>
-                            <span className="text-white/80">{product.supplier || ''}</span>
+                            <span className="text-white/80">{product.supplier || '—'}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <span className="text-white/40">Location:</span>
-                            <span className="text-white/80">{product.location || ''}</span>
+                            <span className="text-white/80">{product.location || '—'}</span>
                           </div>
                         </div>
 
