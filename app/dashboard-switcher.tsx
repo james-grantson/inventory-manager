@@ -1,16 +1,16 @@
 ﻿'use client'
 
 import { useState, useEffect } from 'react'
-import ModernDashboard from './page-modern'
-import ClassicDashboard from './classic-dashboard'
+import SimpleDashboard from './page'
+import SophisticatedDashboard from './sophisticated-dashboard'
 
 export default function DashboardPage() {
-  const [dashboardStyle, setDashboardStyle] = useState<'modern' | 'classic'>('modern')
+  const [dashboardStyle, setDashboardStyle] = useState<'simple' | 'sophisticated'>('simple')
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const saved = localStorage.getItem('dashboardStyle') as 'modern' | 'classic'
+    const saved = localStorage.getItem('dashboardStyle') as 'simple' | 'sophisticated'
     if (saved) setDashboardStyle(saved)
     
     fetchData()
@@ -29,36 +29,43 @@ export default function DashboardPage() {
   }
 
   const toggleDashboard = () => {
-    const newStyle = dashboardStyle === 'modern' ? 'classic' : 'modern'
+    const newStyle = dashboardStyle === 'simple' ? 'sophisticated' : 'simple'
     setDashboardStyle(newStyle)
     localStorage.setItem('dashboardStyle', newStyle)
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent"></div>
       </div>
     )
   }
 
   return (
     <>
-      {/* Switcher Button - Fixed at bottom right */}
+      {/* Switcher Button */}
       <button
         onClick={toggleDashboard}
-        className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg transition-all flex items-center gap-2"
+        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-full shadow-2xl transition-all flex items-center gap-2 border border-white/20 backdrop-blur-sm"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        Switch to {dashboardStyle === 'modern' ? 'Classic' : 'Modern'}
+        {dashboardStyle === 'simple' ? (
+          <>
+            <Sparkles className="h-5 w-5" />
+            Switch to Sophisticated
+          </>
+        ) : (
+          <>
+            <Gem className="h-5 w-5" />
+            Switch to Simple
+          </>
+        )}
       </button>
 
-      {dashboardStyle === 'modern' ? (
-        <ModernDashboard products={products} />
+      {dashboardStyle === 'simple' ? (
+        <SimpleDashboard products={products} />
       ) : (
-        <ClassicDashboard products={products} />
+        <SophisticatedDashboard products={products} />
       )}
     </>
   )
