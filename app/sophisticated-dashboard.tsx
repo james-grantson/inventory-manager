@@ -32,8 +32,10 @@ import {
   Flame,
   Droplet,
   Leaf,
-  Plus
+  Plus,
+  Layout
 } from 'lucide-react'
+import DashboardHeader from './components/DashboardHeader'
 
 interface SophisticatedDashboardProps {
   products?: any[]
@@ -235,9 +237,9 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
         <div className="relative">
-          <div className="w-24 h-24 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+          <div className="w-24 h-24 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-full animate-pulse"></div>
           </div>
@@ -248,15 +250,15 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="bg-white/10 backdrop-blur-xl rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center border border-white/20">
-            <AlertCircle className="h-12 w-12 text-white" />
+          <div className="bg-white/10 backdrop-blur-xl rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center border border-gray-200 dark:border-gray-700">
+            <AlertCircle className="h-12 w-12 text-red-500 dark:text-red-400" />
           </div>
-          <p className="text-white text-lg mb-6">{error}</p>
+          <p className="text-gray-900 dark:text-white text-lg mb-6">{error}</p>
           <button
             onClick={fetchData}
-            className="px-8 py-4 bg-white/10 backdrop-blur-xl text-white rounded-xl hover:bg-white/20 transition-all border border-white/20 shadow-lg"
+            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg"
           >
             Try Again
           </button>
@@ -266,83 +268,18 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800">
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-40 left-40 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-        
-        {/* Floating particles */}
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white/30 rounded-full animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${10 + Math.random() * 10}s`
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/10 backdrop-blur-xl border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <motion.div 
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="flex items-center"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl blur-lg opacity-50"></div>
-                <div className="relative bg-gradient-to-r from-purple-500 to-pink-500 p-3 rounded-xl">
-                  <Gem className="h-8 w-8 text-white" />
-                </div>
-              </div>
-              <div className="ml-4">
-                <h1 className="text-2xl font-bold text-white">Sophisticated Inventory</h1>
-                <p className="text-white/60 text-sm flex items-center gap-2">
-                  <Clock className="h-3 w-3" />
-                  Last updated: {lastUpdated?.toLocaleTimeString()}
-                  <span className="w-1 h-1 rounded-full bg-white/30"></span>
-                  <Sparkles className="h-3 w-3 text-yellow-300" />
-                  Premium Experience
-                </p>
-              </div>
-            </motion.div>
-            
-            <motion.div 
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="flex items-center space-x-3"
-            >
-              <button
-                onClick={fetchData}
-                className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all border border-white/20"
-                title="Refresh (Ctrl+R)"
-              >
-                <RefreshCw className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all border border-white/20"
-              >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-              <button className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all border border-white/20 relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-              </button>
-            </motion.div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-light dark:bg-gray-900 transition-colors duration-300">
+      {/* Header with centered buttons */}
+      <DashboardHeader 
+        title="Sophisticated Inventory" 
+        icon={<Sparkles className="h-8 w-8 text-white" />}
+        subtitle="Premium Experience"
+        currentDashboard="sophisticated"
+        lastUpdated={lastUpdated}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        onRefresh={fetchData}
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Stats Cards */}
@@ -364,18 +301,18 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
               className="relative group"
             >
               <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl`}></div>
-              <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+              <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
                 <div className="flex items-start justify-between mb-3">
                   <div className={`p-3 bg-gradient-to-r ${stat.color} rounded-xl shadow-lg`}>
                     <stat.icon className="h-5 w-5 text-white" />
                   </div>
-                  <span className="text-xs font-medium px-2 py-1 bg-white/20 rounded-full text-white/80">
+                  <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-400">
                     +{Math.floor(Math.random() * 20)}%
                   </span>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-white">{stat.value}</p>
-                  <p className="text-sm text-white/60 mt-1">{stat.label}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{stat.label}</p>
                 </div>
               </div>
             </motion.div>
@@ -387,22 +324,22 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 mb-8"
+          className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg mb-8"
         >
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/40" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Search products, SKU, category, supplier..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 text-white placeholder-white/40"
+                className="w-full pl-12 pr-12 py-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -413,7 +350,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-4 py-4 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 text-white appearance-none min-w-[160px]"
+                className="px-4 py-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
               >
                 <option value="all">All Categories</option>
                 {uniqueCategories.map(cat => (
@@ -424,7 +361,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
               <select
                 value={stockFilter}
                 onChange={(e) => setStockFilter(e.target.value)}
-                className="px-4 py-4 bg-white/10 border border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/50 text-white appearance-none min-w-[140px]"
+                className="px-4 py-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
               >
                 <option value="all">All Stock</option>
                 <option value="healthy">Healthy</option>
@@ -434,21 +371,21 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
 
               <button
                 onClick={clearSearch}
-                className="px-6 py-4 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20 text-white"
+                className="px-6 py-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all text-gray-700 dark:text-gray-300"
               >
                 Clear
               </button>
             </div>
           </div>
 
-          <div className="mt-4 flex items-center gap-4 text-sm text-white/40">
+          <div className="mt-4 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1">
-              <span className="w-1 h-1 rounded-full bg-white/40"></span>
-              Press <kbd className="px-2 py-1 bg-white/10 rounded">ESC</kbd> to clear
+              <span className="w-1 h-1 rounded-full bg-gray-400"></span>
+              Press <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600">ESC</kbd> to clear
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-1 h-1 rounded-full bg-white/40"></span>
-              <kbd className="px-2 py-1 bg-white/10 rounded">Ctrl+R</kbd> to refresh
+              <span className="w-1 h-1 rounded-full bg-gray-400"></span>
+              <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600">Ctrl+R</kbd> to refresh
             </span>
           </div>
         </motion.div>
@@ -459,21 +396,21 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="bg-white/10 backdrop-blur-md rounded-2xl p-16 text-center border border-white/20"
+            className="bg-white dark:bg-gray-800 rounded-2xl p-16 text-center border border-gray-200 dark:border-gray-700 shadow-lg"
           >
             <div className="relative w-32 h-32 mx-auto mb-6">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse"></div>
-              <div className="relative bg-white/10 backdrop-blur-xl rounded-full p-8 flex items-center justify-center border border-white/20">
-                <Package className="h-16 w-16 text-white/60" />
+              <div className="relative bg-white dark:bg-gray-800 rounded-full p-8 flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                <Package className="h-16 w-16 text-gray-400 dark:text-gray-500" />
               </div>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-3">No products found</h3>
-            <p className="text-white/60 mb-8 max-w-md mx-auto">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No products found</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
               {searchQuery ? 'Try adjusting your search or filters' : 'Add your first product to get started'}
             </p>
             <Link
               href="/products/add"
-              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg gap-2"
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg gap-2"
             >
               <Plus className="h-5 w-5" />
               Add New Product
@@ -500,60 +437,60 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                 >
                   <div className={`absolute inset-0 bg-gradient-to-r ${stockStatus.color} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl`}></div>
                   
-                  <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all duration-300">
+                  <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-white">{product.name}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{product.name}</h3>
                           <div className={`px-3 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${stockStatus.color} flex items-center gap-1`}>
                             <StockIcon className="h-3 w-3" />
                             {stockStatus.label}
                           </div>
                         </div>
-                        <p className="text-sm text-white/60 line-clamp-2 mb-3">{product.description}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">{product.description}</p>
                         
-                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 border border-white/20 mb-3">
-                          <span className="text-xs text-white/80">SKU: {product.sku}</span>
+                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 mb-3">
+                          <span className="text-xs text-gray-600 dark:text-gray-300">SKU: {product.sku}</span>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 mb-4">
-                          <div className="bg-white/5 rounded-xl p-3">
-                            <p className="text-xs text-white/40 mb-1">Price</p>
-                            <p className="text-sm font-semibold text-white">{formatCurrency(product.price)}</p>
+                          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Price</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(product.price)}</p>
                           </div>
-                          <div className="bg-white/5 rounded-xl p-3">
-                            <p className="text-xs text-white/40 mb-1">Cost</p>
-                            <p className="text-sm font-semibold text-white">{formatCurrency(product.cost)}</p>
+                          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cost</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(product.cost)}</p>
                           </div>
-                          <div className="bg-white/5 rounded-xl p-3">
-                            <p className="text-xs text-white/40 mb-1">Stock</p>
-                            <p className="text-sm font-semibold text-white">{product.quantity}</p>
+                          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Stock</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{product.quantity}</p>
                           </div>
-                          <div className="bg-white/5 rounded-xl p-3">
-                            <p className="text-xs text-white/40 mb-1">Min</p>
-                            <p className="text-sm font-semibold text-white">{product.minstock}</p>
+                          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Min</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{product.minstock}</p>
                           </div>
                         </div>
 
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center gap-2 text-sm">
-                            <span className="text-white/40">Supplier:</span>
-                            <span className="text-white/80">{product.supplier || ''}</span>
+                            <span className="text-gray-500 dark:text-gray-400">Supplier:</span>
+                            <span className="text-gray-900 dark:text-white">{product.supplier || '—'}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
-                            <span className="text-white/40">Location:</span>
-                            <span className="text-white/80">{product.location || ''}</span>
+                            <span className="text-gray-500 dark:text-gray-400">Location:</span>
+                            <span className="text-gray-900 dark:text-white">{product.location || '—'}</span>
                           </div>
                         </div>
 
-                        <div className={`p-4 rounded-xl bg-gradient-to-r ${profitGradient} bg-opacity-10 border border-white/20`}>
+                        <div className={`p-4 rounded-xl bg-gradient-to-r ${profitGradient} bg-opacity-10 border border-gray-200 dark:border-gray-700`}>
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-white/80">Total Profit</span>
-                            <span className="text-lg font-bold text-white">{formatCurrency(totalProfit)}</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Total Profit</span>
+                            <span className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(totalProfit)}</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-white/80">Margin</span>
-                            <span className="text-sm font-semibold px-3 py-1 rounded-full bg-white/20 text-white">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">Margin</span>
+                            <span className="text-sm font-semibold px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">
                               {profitMargin.toFixed(1)}%
                             </span>
                           </div>
@@ -561,10 +498,10 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/20">
+                    <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <button
                         onClick={() => router.push(`/products/edit/${product.id}`)}
-                        className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all text-white/80 hover:text-white"
+                        className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all text-gray-600 dark:text-gray-300"
                         title="Edit"
                       >
                         <Edit className="h-4 w-4" />
@@ -582,7 +519,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                             }
                           }
                         }}
-                        className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all text-white/80 hover:text-white"
+                        className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all text-gray-600 dark:text-gray-300"
                         title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -590,7 +527,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                     </div>
 
                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Sparkles className="h-4 w-4 text-yellow-300" />
+                      <Sparkles className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />
                     </div>
                   </div>
                 </motion.div>
@@ -604,34 +541,34 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9 }}
-          className="mt-8 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20"
+          className="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg"
         >
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-white/60">Showing</span>
-                <span className="text-white font-semibold">{filteredProducts.length}</span>
-                <span className="text-white/60">of</span>
-                <span className="text-white font-semibold">{products.length}</span>
-                <span className="text-white/60">products</span>
+                <span className="text-gray-500 dark:text-gray-400">Showing</span>
+                <span className="text-gray-900 dark:text-white font-semibold">{filteredProducts.length}</span>
+                <span className="text-gray-500 dark:text-gray-400">of</span>
+                <span className="text-gray-900 dark:text-white font-semibold">{products.length}</span>
+                <span className="text-gray-500 dark:text-gray-400">products</span>
               </div>
-              <div className="w-px h-6 bg-white/20"></div>
+              <div className="w-px h-6 bg-gray-200 dark:bg-gray-700"></div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"></div>
-                  <span className="text-white/60 text-sm">Excellent</span>
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">Excellent</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500"></div>
-                  <span className="text-white/60 text-sm">Fair</span>
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">Fair</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500"></div>
-                  <span className="text-white/60 text-sm">Warning</span>
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">Warning</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-gradient-to-r from-red-500 to-pink-500"></div>
-                  <span className="text-white/60 text-sm">Critical</span>
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">Critical</span>
                 </div>
               </div>
             </div>
@@ -654,13 +591,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
         }
         .animation-delay-4000 {
           animation-delay: 4s;
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        .animate-float {
-          animation: float 8s infinite ease-in-out;
         }
       `}</style>
     </div>

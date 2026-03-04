@@ -3,10 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
+import DashboardHeader from './components/DashboardHeader'
 import { 
   Package, 
   DollarSign, 
@@ -18,7 +15,13 @@ import {
   Barcode,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  Activity,
+  Clock,
+  ShoppingBag,
+  BarChart3,
+  PieChart,
+  Gem
 } from 'lucide-react'
 
 interface ClassicDashboardProps {
@@ -29,21 +32,48 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
   const router = useRouter()
   const [products, setProducts] = useState<any[]>(externalProducts || [])
   const [loading, setLoading] = useState(!externalProducts)
+  const [greeting, setGreeting] = useState('')
+  const [currentTime, setCurrentTime] = useState('')
+  const [darkMode, setDarkMode] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   useEffect(() => {
-    if (externalProducts) {
-      setProducts(externalProducts)
-      setLoading(false)
-    } else {
+    if (!externalProducts) {
       fetchData()
     }
+
+    const hour = new Date().getHours()
+    if (hour < 12) setGreeting('Good Morning')
+    else if (hour < 18) setGreeting('Good Afternoon')
+    else setGreeting('Good Evening')
+    
+    setCurrentTime(new Date().toLocaleTimeString())
+    
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString())
+    }, 1000)
+
+    const savedMode = localStorage.getItem('classicDarkMode')
+    if (savedMode) setDarkMode(savedMode === 'true')
+    
+    return () => clearInterval(timer)
   }, [externalProducts])
+
+  useEffect(() => {
+    localStorage.setItem('classicDarkMode', darkMode.toString())
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [darkMode])
 
   const fetchData = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
       const data = await res.json()
       setProducts(data.products || [])
+      setLastUpdated(new Date())
     } catch (error) {
       console.error('Error:', error)
     } finally {
@@ -65,10 +95,10 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
     return acc
   }, {})
 
-  const getStockVariant = (quantity: number, minstock: number = 10): "default" | "secondary" | "destructive" | "outline" => {
-    if (quantity === 0) return 'destructive'
-    if (quantity <= minstock) return 'secondary'
-    return 'default'
+  const getStockColor = (quantity: number, minstock: number = 10) => {
+    if (quantity === 0) return 'from-red-500 to-red-600 dark:from-red-600 dark:to-red-700'
+    if (quantity <= minstock) return 'from-yellow-500 to-yellow-600 dark:from-yellow-600 dark:to-yellow-700'
+    return 'from-green-500 to-green-600 dark:from-green-600 dark:to-green-700'
   }
 
   const getStockIcon = (quantity: number, minstock: number = 10) => {
@@ -79,182 +109,149 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Classic Dashboard</h1>
-              <p className="text-muted-foreground mt-1">
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" asChild>
-                <Link href="/products">
-                  <Package className="mr-2 h-4 w-4" />
-                  Products
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link href="/products/add">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Product
-                </Link>
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gradient-light dark:bg-gray-900 transition-colors duration-300">
+      {/* Header with centered buttons */}
+      <DashboardHeader 
+        title="Classic Inventory" 
+        icon={<Gem className="h-8 w-8 text-white" />}
+        subtitle="Traditional & Reliable"
+        currentDashboard="classic"
+        lastUpdated={lastUpdated}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        onRefresh={fetchData}
+      />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Total Products</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">{totalProducts}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{totalItems} items in stock</p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Total Value</p>
+            <p className="text-3xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalValue)}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Current inventory value</p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Low Stock</p>
+            <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{lowStock}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Items needing attention</p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Out of Stock</p>
+            <p className="text-3xl font-bold text-red-600 dark:text-red-400">{outOfStock}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Immediate action</p>
           </div>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalProducts}</div>
-              <p className="text-xs text-muted-foreground mt-1">{totalItems} total items</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalValue)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Current inventory value</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Stock Health</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline justify-between">
-                <div><span className="text-2xl font-bold text-green-600">{healthyStock}</span><span className="text-sm ml-1">good</span></div>
-                <div><span className="text-2xl font-bold text-yellow-600">{lowStock}</span><span className="text-sm ml-1">low</span></div>
-                <div><span className="text-2xl font-bold text-red-600">{outOfStock}</span><span className="text-sm ml-1">out</span></div>
-              </div>
-              <Progress value={(healthyStock / totalProducts) * 100} className="mt-3 h-2" />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Categories</CardTitle>
-              <Layers className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">{Object.keys(categories).length}</div>
-              <p className="text-xs text-muted-foreground mt-1">Unique categories</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Category Distribution</CardTitle>
-            <CardDescription>Breakdown of products by category</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {Object.entries(categories).map(([category, count]: [string, any]) => (
-              <div key={category}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="font-medium">{category}</span>
-                  <span className="text-muted-foreground">{count} products</span>
-                </div>
-                <Progress value={(count / totalProducts) * 100} className="h-2" />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Recent Products</CardTitle>
-              <CardDescription>Your latest inventory items</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/products" className="gap-1">
-                View All <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
+        {/* Stock Health Overview */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Activity className="h-5 w-5 text-blue-500" />
+              Stock Health
+            </h2>
             <div className="space-y-4">
-              {products.slice(0, 5).map((product) => (
-                <div
-                  key={product.id}
-                  onClick={() => router.push(`/products/edit/${product.id}`)}
-                  className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent cursor-pointer transition-colors"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">{product.name}</h3>
-                      <Badge variant={getStockVariant(product.quantity, product.minstock)} className="gap-1">
-                        {getStockIcon(product.quantity, product.minstock)}
-                        {product.quantity === 0 ? 'Out' : product.quantity <= (product.minstock || 10) ? 'Low' : 'In Stock'}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      SKU: {product.sku}  {product.category}
-                    </p>
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600 dark:text-gray-400">Healthy</span>
+                  <span className="text-gray-900 dark:text-white font-medium">{healthyStock}</span>
+                </div>
+                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-green-500 dark:bg-green-600 rounded-full" style={{ width: `${(healthyStock / totalProducts) * 100}%` }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600 dark:text-gray-400">Low Stock</span>
+                  <span className="text-gray-900 dark:text-white font-medium">{lowStock}</span>
+                </div>
+                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-yellow-500 dark:bg-yellow-600 rounded-full" style={{ width: `${(lowStock / totalProducts) * 100}%` }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600 dark:text-gray-400">Out of Stock</span>
+                  <span className="text-gray-900 dark:text-white font-medium">{outOfStock}</span>
+                </div>
+                <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-red-500 dark:bg-red-600 rounded-full" style={{ width: `${(outOfStock / totalProducts) * 100}%` }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Category Distribution</h2>
+            <div className="space-y-3">
+              {Object.entries(categories).map(([category, count]: [string, any]) => (
+                <div key={category}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600 dark:text-gray-400">{category}</span>
+                    <span className="text-gray-900 dark:text-white">{count}</span>
                   </div>
-                  <div className="text-right">
-                    <div className="font-medium">{formatCurrency(product.price)}</div>
-                    <p className="text-sm text-muted-foreground">{product.quantity} units</p>
+                  <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 dark:from-blue-600 dark:to-purple-600 rounded-full" style={{ width: `${(count / totalProducts) * 100}%` }}></div>
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-          <Button variant="outline" className="h-24 flex-col gap-2" asChild>
-            <Link href="/products/add">
-              <Plus className="h-5 w-5" />
-              <span>Add Product</span>
+        {/* Recent Products */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Products</h2>
+            <Link href="/products" className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+              View all
             </Link>
-          </Button>
-          <Button variant="outline" className="h-24 flex-col gap-2" asChild>
-            <Link href="/products">
-              <Package className="h-5 w-5" />
-              <span>Manage</span>
-            </Link>
-          </Button>
-          <Button variant="outline" className="h-24 flex-col gap-2" asChild>
-            <Link href="/reports">
-              <FileText className="h-5 w-5" />
-              <span>Reports</span>
-            </Link>
-          </Button>
-          <Button variant="outline" className="h-24 flex-col gap-2" asChild>
-            <Link href="/barcode">
-              <Barcode className="h-5 w-5" />
-              <span>Barcode</span>
-            </Link>
-          </Button>
+          </div>
+          
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {products.slice(0, 5).map((product) => (
+              <div
+                key={product.id}
+                onClick={() => router.push(`/products/edit/${product.id}`)}
+                className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-medium text-gray-900 dark:text-white">{product.name}</h3>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium text-white bg-gradient-to-r ${getStockColor(product.quantity, product.minstock)}`}>
+                        {product.quantity === 0 ? 'Out' : product.quantity <= (product.minstock || 10) ? 'Low' : 'In'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{product.description}</p>
+                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 dark:text-gray-500">
+                      <span>SKU: {product.sku}</span>
+                      <span></span>
+                      <span>{product.category}</span>
+                    </div>
+                  </div>
+                  <div className="text-right ml-4">
+                    <div className="font-semibold text-gray-900 dark:text-white">{formatCurrency(product.price)}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{product.quantity} units</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </main>
     </div>

@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { 
+import {
   Package, 
   DollarSign, 
-  AlertTriangle, 
+  AlertTriangle,
   Layers,
   Search,
   RefreshCw,
@@ -18,8 +18,10 @@ import {
   X,
   CheckCircle,
   AlertCircle,
-  Plus
+  Plus,
+  Layout
 } from 'lucide-react'
+import DashboardHeader from './DashboardHeader'
 
 interface SimpleDashboardProps {
   products?: any[]
@@ -62,7 +64,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
     const timer = setTimeout(() => {
       filterProducts()
     }, 300)
-
     return () => clearTimeout(timer)
   }, [searchQuery, products, categoryFilter, stockFilter])
 
@@ -92,6 +93,13 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
   useEffect(() => {
     const savedMode = localStorage.getItem('simpleDarkMode')
     if (savedMode) setDarkMode(savedMode === 'true')
+    
+    // Apply dark mode to html element
+    if (savedMode === 'true') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
   }, [])
 
   useEffect(() => {
@@ -144,7 +152,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
   const filterProducts = useCallback(() => {
     let filtered = [...products]
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(p => 
@@ -157,12 +164,10 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
       )
     }
 
-    // Category filter
     if (categoryFilter !== 'all') {
       filtered = filtered.filter(p => p.category === categoryFilter)
     }
 
-    // Stock filter
     if (stockFilter === 'low') {
       filtered = filtered.filter(p => p.quantity <= p.minstock && p.quantity > 0)
     } else if (stockFilter === 'out') {
@@ -178,12 +183,12 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
 
   const getStockStatus = (product: any) => {
     if (product.quantity === 0) {
-      return { label: 'Out of Stock', color: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400', icon: AlertCircle }
+      return { label: 'Out of Stock', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', icon: AlertCircle }
     }
     if (product.quantity <= product.minstock) {
-      return { label: 'Low Stock', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400', icon: AlertTriangle }
+      return { label: 'Low Stock', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', icon: AlertTriangle }
     }
-    return { label: 'In Stock', color: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400', icon: CheckCircle }
+    return { label: 'In Stock', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', icon: CheckCircle }
   }
 
   const getProfitColor = (profit: number, margin: number) => {
@@ -199,7 +204,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
     setStockFilter('all')
   }
 
-  // Handle Escape key to clear search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -216,29 +220,23 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative w-20 h-20 mx-auto">
-            <div className="absolute inset-0 border-4 border-blue-200 dark:border-blue-800 rounded-full animate-ping"></div>
-            <div className="absolute inset-0 border-4 border-blue-600 dark:border-blue-400 rounded-full animate-spin border-t-transparent"></div>
-          </div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent"></div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="bg-red-100 dark:bg-red-900/20 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-            <AlertCircle className="h-10 w-10 text-red-600 dark:text-red-400" />
+          <div className="bg-white dark:bg-gray-800 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center shadow-lg">
+            <AlertCircle className="h-10 w-10 text-red-500 dark:text-red-400" />
           </div>
-          <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+          <p className="text-gray-800 dark:text-gray-200 mb-4">{error}</p>
           <button
             onClick={fetchData}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors shadow-lg"
           >
             Try Again
           </button>
@@ -248,98 +246,77 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <ShoppingBag className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Simple Inventory</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {lastUpdated && `Last updated: ${lastUpdated.toLocaleTimeString()}`}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={fetchData}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                title="Refresh (Ctrl+R)"
-              >
-                <RefreshCw className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                {darkMode ? '' : ''}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-light dark:bg-gray-900 transition-colors duration-300">
+      {/* Header with centered buttons */}
+      <DashboardHeader 
+        title="Simple Inventory" 
+        icon={<Layout className="h-8 w-8 text-white" />}
+        subtitle="Clean & Professional"
+        currentDashboard="simple"
+        lastUpdated={lastUpdated}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        onRefresh={fetchData}
+      />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Products</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalProducts}</p>
               </div>
-              <div className="bg-blue-100 dark:bg-blue-900/20 p-3 rounded-lg">
-                <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg">
+                <Package className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Value</p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{formatCurrency(stats.totalValue)}</p>
               </div>
-              <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg">
+              <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
                 <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Profit</p>
                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{formatCurrency(stats.totalProfit)}</p>
               </div>
-              <div className="bg-purple-100 dark:bg-purple-900/20 p-3 rounded-lg">
+              <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg">
                 <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock</p>
                 <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">{stats.lowStock}</p>
               </div>
-              <div className="bg-yellow-100 dark:bg-yellow-900/20 p-3 rounded-lg">
+              <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg">
                 <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Categories</p>
                 <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{stats.categories}</p>
               </div>
-              <div className="bg-indigo-100 dark:bg-indigo-900/20 p-3 rounded-lg">
+              <div className="bg-indigo-100 dark:bg-indigo-900/30 p-3 rounded-lg">
                 <Layers className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
               </div>
             </div>
@@ -347,21 +324,21 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 mb-8">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Search products, SKU, category, supplier..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full pl-10 pr-10 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -372,7 +349,7 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
               >
                 <option value="all">All Categories</option>
                 {uniqueCategories.map(cat => (
@@ -383,7 +360,7 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
               <select
                 value={stockFilter}
                 onChange={(e) => setStockFilter(e.target.value)}
-                className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                className="px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
               >
                 <option value="all">All Stock</option>
                 <option value="healthy">Healthy</option>
@@ -393,7 +370,7 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
 
               <button
                 onClick={clearSearch}
-                className="px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-all text-gray-700 dark:text-gray-300"
               >
                 Clear
               </button>
@@ -401,28 +378,28 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
           </div>
 
           <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-            Press <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">ESC</kbd> to clear search
+            Press <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600">ESC</kbd> to clear search
           </div>
         </div>
 
         {/* Products Table */}
         {filteredProducts.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center border border-gray-200 dark:border-gray-700">
-            <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 text-center border border-gray-200 dark:border-gray-700">
+            <Package className="h-16 w-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
             <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No products found</h3>
             <p className="text-gray-500 dark:text-gray-400 mb-6">
               {searchQuery ? 'Try adjusting your search or filters' : 'Add your first product to get started'}
             </p>
             <Link
               href="/products/add"
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors shadow-lg"
             >
               <Plus className="h-5 w-5 mr-2" />
               Add New Product
             </Link>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
@@ -461,7 +438,7 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                             {product.sku}
                           </span>
                         </td>
@@ -490,7 +467,7 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => router.push(`/products/edit/${product.id}`)}
-                              className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                              className="p-2 text-gray-400 hover:text-purple-600 dark:text-gray-500 dark:hover:text-purple-400 transition-colors"
                               title="Edit"
                             >
                               <Edit className="h-4 w-4" />
@@ -508,7 +485,7 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
                                   }
                                 }
                               }}
-                              className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                              className="p-2 text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 transition-colors"
                               title="Delete"
                             >
                               <Trash2 className="h-4 w-4" />

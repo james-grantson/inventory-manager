@@ -1,17 +1,19 @@
 ﻿'use client'
 
 import { useState, useEffect } from 'react'
-import { Sparkles, Gem } from 'lucide-react'
+import Link from 'next/link'
+import { Sparkles, Gem, Layout, Plus } from 'lucide-react'
 import { SimpleDashboard } from './components/SimpleDashboard'
 import SophisticatedDashboard from './sophisticated-dashboard'
+import ClassicDashboard from './classic-dashboard'
 
 export default function DashboardPage() {
-  const [dashboardStyle, setDashboardStyle] = useState<'simple' | 'sophisticated'>('simple')
+  const [dashboardStyle, setDashboardStyle] = useState<'classic' | 'simple' | 'sophisticated'>('simple')
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const saved = localStorage.getItem('dashboardStyle') as 'simple' | 'sophisticated'
+    const saved = localStorage.getItem('dashboardStyle') as 'classic' | 'simple' | 'sophisticated'
     if (saved) setDashboardStyle(saved)
     
     fetchData()
@@ -29,10 +31,41 @@ export default function DashboardPage() {
     }
   }
 
-  const toggleDashboard = () => {
-    const newStyle = dashboardStyle === 'simple' ? 'sophisticated' : 'simple'
-    setDashboardStyle(newStyle)
-    localStorage.setItem('dashboardStyle', newStyle)
+  const cycleDashboard = () => {
+    const next = {
+      'classic': 'simple',
+      'simple': 'sophisticated',
+      'sophisticated': 'classic'
+    }[dashboardStyle] as 'classic' | 'simple' | 'sophisticated'
+    
+    setDashboardStyle(next)
+    localStorage.setItem('dashboardStyle', next)
+  }
+
+  const getButtonInfo = () => {
+    switch(dashboardStyle) {
+      case 'classic': 
+        return { 
+          next: 'Simple', 
+          icon: Layout, 
+          color: 'from-blue-600 to-blue-700',
+          label: 'Classic'
+        }
+      case 'simple': 
+        return { 
+          next: 'Sophisticated', 
+          icon: Sparkles, 
+          color: 'from-purple-600 to-pink-600',
+          label: 'Simple'
+        }
+      case 'sophisticated': 
+        return { 
+          next: 'Classic', 
+          icon: Gem, 
+          color: 'from-green-600 to-emerald-600',
+          label: 'Sophisticated'
+        }
+    }
   }
 
   if (loading) {
@@ -43,31 +76,38 @@ export default function DashboardPage() {
     )
   }
 
+  const buttonInfo = getButtonInfo()
+
   return (
     <>
-      {/* Switcher Button */}
-      <button
-        onClick={toggleDashboard}
-        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-full shadow-2xl transition-all flex items-center gap-2 border border-white/20 backdrop-blur-sm"
-      >
-        {dashboardStyle === 'simple' ? (
-          <>
-            <Sparkles className="h-5 w-5" />
-            Switch to Sophisticated
-          </>
-        ) : (
-          <>
-            <Gem className="h-5 w-5" />
-            Switch to Simple
-          </>
-        )}
-      </button>
+      {/* Top Bar with Add Product Button and Dashboard Switcher */}
+      <div className="fixed top-4 right-4 z-50 flex gap-2">
+        <Link
+          href="/products/add"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+        >
+          <Plus className="h-5 w-5" />
+          Add Product
+        </Link>
+        
+        <button
+          onClick={cycleDashboard}
+          className={`bg-gradient-to-r ${buttonInfo.color} hover:opacity-90 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 transition-all`}
+        >
+          <buttonInfo.icon className="h-5 w-5" />
+          {buttonInfo.next}
+        </button>
+      </div>
 
-      {dashboardStyle === 'simple' ? (
-        <SimpleDashboard products={products} />
-      ) : (
-        <SophisticatedDashboard products={products} />
-      )}
+      {/* Current Dashboard Label (for debugging) */}
+      <div className="fixed top-4 left-4 z-50 bg-black/50 text-white px-3 py-1 rounded-lg text-sm">
+        Current: {buttonInfo.label}
+      </div>
+
+      {/* Render the selected dashboard */}
+      {dashboardStyle === 'classic' && <ClassicDashboard products={products} />}
+      {dashboardStyle === 'simple' && <SimpleDashboard products={products} />}
+      {dashboardStyle === 'sophisticated' && <SophisticatedDashboard products={products} />}
     </>
   )
 }
