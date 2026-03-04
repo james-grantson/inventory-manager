@@ -37,32 +37,42 @@ export default function EditProductPage() {
 
   const fetchProduct = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${params.id}`)
-      if (!res.ok) throw new Error('Failed to fetch product')
+      setLoading(true)
+      const productId = params.id
+      console.log('Fetching product ID:', productId)
       
-      const data = await res.json()
-      console.log('Fetched product:', data)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`)
       
+      if (!res.ok) {
+        throw new Error('Failed to fetch product')
+      }
+      
+      const product = await res.json()
+      console.log('Product data received:', product)
+      
+      // Populate form with product data
       setFormData({
-        name: data.name || '',
-        sku: data.sku || '',
-        description: data.description || '',
-        category: data.category || '',
-        price: data.price?.toString() || '',
-        cost: data.cost?.toString() || '',
-        quantity: data.quantity?.toString() || '',
-        minstock: data.minstock?.toString() || '10',
-        supplier: data.supplier || '',
-        location: data.location || ''
+        name: product.name || '',
+        sku: product.sku || '',
+        description: product.description || '',
+        category: product.category || '',
+        price: product.price?.toString() || '',
+        cost: product.cost?.toString() || '',
+        quantity: product.quantity?.toString() || '',
+        minstock: product.minstock?.toString() || '10',
+        supplier: product.supplier || '',
+        location: product.location || ''
       })
       
-      if (data.image_url) {
-        setImageUrl(data.image_url)
-        setImagePreview(data.image_url)
+      // Set image if exists
+      if (product.image_url) {
+        setImageUrl(product.image_url)
+        setImagePreview(product.image_url)
       }
+      
     } catch (err) {
-      setError('Failed to load product')
-      console.error(err)
+      console.error('Error fetching product:', err)
+      setError('Failed to load product data')
     } finally {
       setLoading(false)
     }
@@ -77,24 +87,17 @@ export default function EditProductPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-    
-    // Auto-generate SKU when category changes
-    if (name === 'category') {
-      setFormData(prev => ({ ...prev, sku: generateSKU() }))
-    }
   }
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file')
       return
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError('Image must be less than 5MB')
       return
@@ -107,37 +110,26 @@ export default function EditProductPage() {
   }
 
   const uploadImage = async (): Promise<string | null> => {
-    if (!imageFile) return imageUrl // Return existing URL if no new file
+    if (!imageFile) return imageUrl
 
     setUploading(true)
-    setUploadSuccess(false)
-    
     try {
-      // Generate unique filename
       const fileExt = imageFile.name.split('.').pop()
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
       const filePath = `products/${fileName}`
 
-      console.log('Uploading to Supabase...', filePath)
-
-      // Upload to Supabase
       const { error: uploadError } = await supabase.storage
         .from('product-images')
         .upload(filePath, imageFile)
 
       if (uploadError) throw uploadError
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('product-images')
         .getPublicUrl(filePath)
 
-      console.log('Upload successful:', publicUrl)
       setUploadSuccess(true)
-      
-      // Show success message for 3 seconds
       setTimeout(() => setUploadSuccess(false), 3000)
-      
       return publicUrl
     } catch (err) {
       console.error('Upload error:', err)
@@ -164,12 +156,6 @@ export default function EditProductPage() {
     setSuccessMessage('')
 
     try {
-      // Validate required fields
-      if (!formData.name || !formData.category || !formData.price || !formData.cost || !formData.quantity) {
-        throw new Error('Please fill in all required fields')
-      }
-
-      // Upload image first if there's a new one
       let finalImageUrl = imageUrl
       if (imageFile) {
         const uploadedUrl = await uploadImage()
@@ -192,7 +178,7 @@ export default function EditProductPage() {
         image_url: finalImageUrl || null
       }
 
-      console.log('Updating product with data:', productData)
+      console.log('Updating product:', productData)
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${params.id}`, {
         method: 'PUT',
@@ -200,19 +186,16 @@ export default function EditProductPage() {
         body: JSON.stringify(productData)
       })
 
-      const responseData = await res.json()
-      
       if (!res.ok) {
-        throw new Error(responseData.error || 'Failed to update product')
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Failed to update product')
       }
       
       setSuccessMessage('Product updated successfully!')
-      
-      // Redirect after 2 seconds
       setTimeout(() => {
         router.push('/products')
         router.refresh()
-      }, 2000)
+      }, 1500)
       
     } catch (err: any) {
       console.error('Update error:', err)
@@ -231,7 +214,6 @@ export default function EditProductPage() {
       })
 
       if (!res.ok) throw new Error('Failed to delete product')
-      
       router.push('/products')
       router.refresh()
     } catch (err) {
@@ -251,40 +233,28 @@ export default function EditProductPage() {
   return (
     <div className="min-h-screen bg-gradient-light dark:bg-gray-900">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Link
-              href="/products"
-              className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            <Link href="/products" className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
+              <ArrowLeft className="h-5 w-5" />
             </Link>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Product</h1>
           </div>
-          
-          <button
-            onClick={handleDelete}
-            className="p-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors"
-            title="Delete Product"
-          >
+          <button onClick={handleDelete} className="p-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-600 rounded-lg">
             <Trash2 className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
-          {/* Success Message */}
           {successMessage && (
-            <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3 text-green-700 dark:text-green-300">
+            <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg flex items-center gap-3 text-green-700">
               <CheckCircle className="h-5 w-5" />
               {successMessage}
             </div>
           )}
 
-          {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg text-red-700">
               {error}
             </div>
           )}
@@ -295,58 +265,31 @@ export default function EditProductPage() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Product Image</h2>
               
               <div className="flex items-start gap-6">
-                {/* Image Preview */}
                 <div className="relative">
                   {imagePreview ? (
                     <div className="relative group">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-32 h-32 object-cover rounded-xl border-2 border-gray-200 dark:border-gray-700"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                        title="Remove image"
-                        disabled={uploading}
-                      >
+                      <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover rounded-xl border-2 border-gray-200" />
+                      <button type="button" onClick={handleRemoveImage} className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100">
                         <Trash2 className="h-3 w-3" />
                       </button>
-                      
-                      {/* Upload Success Badge */}
                       {uploadSuccess && (
-                        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 whitespace-nowrap">
+                        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                           <CheckCircle className="h-3 w-3" />
                           Uploaded!
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="w-32 h-32 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
+                    <div className="w-32 h-32 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
                       <ImageIcon className="h-8 w-8 text-gray-400" />
                     </div>
                   )}
                 </div>
 
-                {/* Upload Controls */}
                 <div className="flex-1">
-                  <input
-                    type="file"
-                    id="image-upload"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                    disabled={uploading}
-                  />
-                  
+                  <input type="file" id="image-upload" accept="image/*" onChange={handleImageSelect} className="hidden" disabled={uploading} />
                   <div className="space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById('image-upload')?.click()}
-                      disabled={uploading}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
-                    >
+                    <button type="button" onClick={() => document.getElementById('image-upload')?.click()} disabled={uploading} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 disabled:opacity-50">
                       {uploading ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -359,198 +302,79 @@ export default function EditProductPage() {
                         </>
                       )}
                     </button>
-                    
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Supported formats: JPG, PNG, GIF, WebP<br />
-                      Max size: 5MB
-                    </p>
-                    
-                    {imagePreview && imagePreview !== imageUrl && (
-                      <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        New image selected (will be saved when you click Save)
-                      </p>
-                    )}
+                    <p className="text-xs text-gray-500">Max size: 5MB</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Basic Information - Same as Add Page */}
+            {/* Form Fields - Same as Add Page */}
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Product Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
-                    placeholder="e.g. Engine Oil 5W-30"
-                  />
+                  <label className="block text-sm font-medium mb-2">Product Name *</label>
+                  <input type="text" name="name" value={formData.name} onChange={handleChange} required
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    SKU
-                  </label>
-                  <input
-                    type="text"
-                    name="sku"
-                    value={formData.sku}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
-                    placeholder="Auto-generated if empty"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Leave empty to auto-generate
-                  </p>
+                  <label className="block text-sm font-medium mb-2">SKU</label>
+                  <input type="text" name="sku" value={formData.sku} onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
                 </div>
-
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
-                    placeholder="Product description..."
-                  />
+                  <label className="block text-sm font-medium mb-2">Description</label>
+                  <textarea name="description" value={formData.description} onChange={handleChange} rows={3}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Category *
-                  </label>
-                  <input
-                    type="text"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
-                    placeholder="e.g. Automotive"
-                  />
+                  <label className="block text-sm font-medium mb-2">Category *</label>
+                  <input type="text" name="category" value={formData.category} onChange={handleChange} required
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Supplier
-                  </label>
-                  <input
-                    type="text"
-                    name="supplier"
-                    value={formData.supplier}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
-                    placeholder="e.g. Auto Parts Co."
-                  />
+                  <label className="block text-sm font-medium mb-2">Supplier</label>
+                  <input type="text" name="supplier" value={formData.supplier} onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
-                    placeholder="e.g. Aisle 3, Shelf B"
-                  />
+                  <label className="block text-sm font-medium mb-2">Location</label>
+                  <input type="text" name="location" value={formData.location} onChange={handleChange}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
                 </div>
               </div>
             </div>
 
-            {/* Pricing and Stock - Same as Add Page */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Pricing & Stock</h2>
-              
+            {/* Pricing and Stock */}
+            <div className="border-t pt-6">
+              <h2 className="text-lg font-semibold mb-4">Pricing & Stock</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Price (GH) *
-                  </label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    step="0.01"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
-                    placeholder="0.00"
-                  />
+                  <label className="block text-sm font-medium mb-2">Price (GH) *</label>
+                  <input type="number" name="price" value={formData.price} onChange={handleChange} required min="0" step="0.01"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Cost (GH) *
-                  </label>
-                  <input
-                    type="number"
-                    name="cost"
-                    value={formData.cost}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    step="0.01"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
-                    placeholder="0.00"
-                  />
+                  <label className="block text-sm font-medium mb-2">Cost (GH) *</label>
+                  <input type="number" name="cost" value={formData.cost} onChange={handleChange} required min="0" step="0.01"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Quantity *
-                  </label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
-                    placeholder="0"
-                  />
+                  <label className="block text-sm font-medium mb-2">Quantity *</label>
+                  <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} required min="0"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Min Stock *
-                  </label>
-                  <input
-                    type="number"
-                    name="minstock"
-                    value={formData.minstock}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
-                    placeholder="10"
-                  />
+                  <label className="block text-sm font-medium mb-2">Min Stock *</label>
+                  <input type="number" name="minstock" value={formData.minstock} onChange={handleChange} required min="0"
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
                 </div>
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end pt-6 border-t border-gray-200 dark:border-gray-700">
-              <button
-                type="submit"
-                disabled={saving || uploading}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl transition-all flex items-center gap-2 disabled:opacity-50 shadow-lg"
-              >
+            <div className="flex justify-end pt-6 border-t">
+              <button type="submit" disabled={saving || uploading}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl flex items-center gap-2 disabled:opacity-50">
                 {saving || uploading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
