@@ -3,218 +3,325 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-
-interface Product {
-  id: string
-  name: string
-  description: string
-  price: number
-  quantity: number
-  sku: string
-  category: string
-}
+import { 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Image as ImageIcon,
+  Package,
+  RefreshCw,
+  LayoutGrid,
+  Table as TableIcon
+} from 'lucide-react'
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const router = useRouter()
+  const [products, setProducts] = useState<any[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'table' | 'gallery'>('table')
 
   useEffect(() => {
     fetchProducts()
   }, [])
 
+  useEffect(() => {
+    filterProducts()
+  }, [searchQuery, products])
+
   const fetchProducts = async () => {
     try {
-      setLoading(true)
-      setError('')
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
-      const data = await response.json()
-      
-      console.log('API Response:', data)
-      
-      // Handle different API response formats
-      let productsArray = []
-      if (Array.isArray(data)) {
-        productsArray = data
-      } else if (data.products && Array.isArray(data.products)) {
-        productsArray = data.products
-      } else if (data.data && Array.isArray(data.data)) {
-        productsArray = data.data
-      } else {
-        console.error('Unexpected API response format:', data)
-        setError('Invalid data format from API')
-        setProducts([])
-        setLoading(false)
-        return
-      }
-      
-      setProducts(productsArray)
-    } catch (err) {
-      console.error('Error fetching products:', err)
-      setError('Failed to load products')
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+      const data = await res.json()
+      setProducts(data.products || [])
+      setFilteredProducts(data.products || [])
+    } catch (error) {
+      console.error('Error:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return `GH${amount.toFixed(2)}`
+  const filterProducts = () => {
+    if (!searchQuery.trim()) {
+      setFilteredProducts(products)
+      return
+    }
+
+    const query = searchQuery.toLowerCase()
+    const filtered = products.filter(p => 
+      p.name?.toLowerCase().includes(query) ||
+      p.sku?.toLowerCase().includes(query) ||
+      p.category?.toLowerCase().includes(query)
+    )
+    setFilteredProducts(filtered)
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure?')) return
-    
+    if (!confirm('Are you sure you want to delete this product?')) return
+
     try {
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`, {
         method: 'DELETE'
       })
-      fetchProducts() // Refresh the list
-    } catch (err) {
-      console.error('Error deleting:', err)
+      fetchProducts()
+    } catch (error) {
+      console.error('Error:', error)
     }
+  }
+
+  const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
+
+  const getStockStatus = (quantity: number, minstock: number) => {
+    if (quantity === 0) return { label: 'Out of Stock', class: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300' }
+    if (quantity <= minstock) return { label: 'Low Stock', class: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300' }
+    return { label: 'In Stock', class: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading products...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
       </div>
     )
   }
 
-  // Calculate totals safely
-  const totalProducts = products.length
-  const totalValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0)
-  const lowStock = products.filter(p => p.quantity < 10).length
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-            <div className="space-x-4">
-              <button
-                onClick={fetchProducts}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                Refresh
-              </button>
-              <Link
-                href="/products/add"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Add Product
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <div className="min-h-screen bg-gradient-light dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error message */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-            {error}
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Products</h1>
+            <p className="text-gray-500 dark:text-gray-400 mt-1">
+              {filteredProducts.length} products found
+            </p>
           </div>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="text-sm text-gray-600">Total Products</div>
-            <div className="text-2xl font-bold mt-1">{totalProducts}</div>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="text-sm text-gray-600">Total Value</div>
-            <div className="text-2xl font-bold mt-1 text-green-600">
-              {formatCurrency(totalValue)}
+          
+          <div className="flex gap-3">
+            {/* View Toggle */}
+            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-2 rounded-lg transition-colors ${
+                  viewMode === 'table' 
+                    ? 'bg-white dark:bg-gray-700 shadow-sm' 
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+                title="Table View"
+              >
+                <TableIcon className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('gallery')}
+                className={`p-2 rounded-lg transition-colors ${
+                  viewMode === 'gallery' 
+                    ? 'bg-white dark:bg-gray-700 shadow-sm' 
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+                title="Gallery View"
+              >
+                <LayoutGrid className="h-5 w-5" />
+              </button>
             </div>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="text-sm text-gray-600">Low Stock Items</div>
-            <div className="text-2xl font-bold mt-1 text-yellow-600">
-              {lowStock}
-            </div>
-          </div>
-        </div>
 
-        {/* Products Table */}
-        {products.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <p className="text-gray-500 mb-4">No products found</p>
             <Link
               href="/products/add"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
             >
-              Add Your First Product
+              <Plus className="h-5 w-5" />
+              Add Product
             </Link>
           </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="font-medium text-gray-900">{product.name}</div>
-                      <div className="text-sm text-gray-500">{product.description}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{product.sku}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {formatCurrency(product.price)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        product.quantity < 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                      }`}>
-                        {product.quantity} units
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm space-x-3">
-                      <button
-                        onClick={() => router.push(`/products/edit/${product.id}`)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </td>
+        </div>
+
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search products by name, SKU, or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white"
+            />
+          </div>
+        </div>
+
+        {/* Products Display */}
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No products found</p>
+          </div>
+        ) : viewMode === 'table' ? (
+          /* Table View */
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Image</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Product</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">SKU</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Category</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Price</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Stock</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredProducts.map((product) => {
+                    const status = getStockStatus(product.quantity, product.minstock)
+                    return (
+                      <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td className="px-6 py-4">
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="w-12 h-12 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                              <ImageIcon className="h-6 w-6 text-gray-400" />
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{product.name}</td>
+                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{product.sku}</td>
+                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{product.category}</td>
+                        <td className="px-6 py-4 font-medium text-green-600 dark:text-green-400">{formatCurrency(product.price)}</td>
+                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{product.quantity}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.class}`}>
+                            {status.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => router.push(`/products/edit/${product.id}`)}
+                              className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-blue-600 dark:text-blue-400"
+                              title="Edit"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(product.id)}
+                              className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-red-600 dark:text-red-400"
+                              title="Delete"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          /* Gallery View */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => {
+              const status = getStockStatus(product.quantity, product.minstock)
+              return (
+                <div
+                  key={product.id}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all cursor-pointer group"
+                  onClick={() => router.push(`/products/edit/${product.id}`)}
+                >
+                  {/* Image */}
+                  <div className="relative h-48 bg-gray-100 dark:bg-gray-900">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="h-16 w-16 text-gray-400" />
+                      </div>
+                    )}
+                    
+                    {/* Status Badge */}
+                    <div className="absolute top-3 right-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.class}`}>
+                        {status.label}
+                      </span>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/products/edit/${product.id}`)
+                        }}
+                        className="p-3 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                        title="Edit"
+                      >
+                        <Edit className="h-5 w-5 text-gray-700" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(product.id)
+                        }}
+                        className="p-3 bg-white rounded-full hover:bg-gray-100 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-5 w-5 text-red-600" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1">
+                      {product.name}
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                      SKU: {product.sku}  {product.category}
+                    </p>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                        {formatCurrency(product.price)}
+                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        Stock: {product.quantity}
+                      </span>
+                    </div>
+
+                    {product.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
+                        {product.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
-        {/* Debug info */}
-        <div className="mt-8 p-4 bg-gray-100 rounded-lg text-sm">
-          <p><strong>Debug:</strong> Products array length: {products.length}</p>
-          <p><strong>API URL:</strong> {process.env.NEXT_PUBLIC_API_URL}/api/products</p>
+        {/* Refresh Button */}
+        <div className="mt-6 flex justify-center">
           <button
-            onClick={() => console.log('Products:', products)}
-            className="mt-2 px-3 py-1 bg-gray-300 rounded text-xs"
+            onClick={fetchProducts}
+            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg flex items-center gap-2 transition-colors border border-gray-200 dark:border-gray-700"
           >
-            Log to Console
+            <RefreshCw className="h-4 w-4" />
+            Refresh Products
           </button>
         </div>
       </div>
