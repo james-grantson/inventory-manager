@@ -5,14 +5,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Plus, 
-  Layout, 
+  Plus,
+  Layout,
   ChevronDown,
   Gem,
   Sparkles,
   Sun,
   Moon,
-  Bell
+  Bell,
+  BarChart3
 } from 'lucide-react'
 
 interface DashboardHeaderProps {
@@ -26,10 +27,10 @@ interface DashboardHeaderProps {
   onRefresh?: () => void
 }
 
-export default function DashboardHeader({ 
-  title, 
+export default function DashboardHeader({
+  title,
   icon, 
-  subtitle, 
+  subtitle,
   currentDashboard,
   lastUpdated,
   darkMode,
@@ -42,7 +43,7 @@ export default function DashboardHeader({
   const switchDashboard = (dashboard: string) => {
     setDropdownOpen(false)
     localStorage.setItem('dashboardStyle', dashboard)
-    
+
     // Force a hard refresh to ensure all components reload with new state
     window.location.href = '/'
   }
@@ -69,7 +70,7 @@ export default function DashboardHeader({
               </div>
             </div>
             <div className="ml-4">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>   
               {subtitle && (
                 <p className="text-gray-600 dark:text-gray-300 text-sm flex items-center gap-2">
                   {lastUpdated && (
@@ -81,7 +82,7 @@ export default function DashboardHeader({
                   <span className="flex items-center gap-1">
                     <span className={`w-2 h-2 rounded-full ${
                       currentDashboard === 'classic' ? 'bg-blue-500' : 
-                      currentDashboard === 'simple' ? 'bg-purple-500' : 
+                      currentDashboard === 'simple' ? 'bg-purple-500' :
                       'bg-pink-500'
                     }`}></span>
                     {currentDashboard.charAt(0).toUpperCase() + currentDashboard.slice(1)} Mode
@@ -100,7 +101,7 @@ export default function DashboardHeader({
               <Plus className="h-4 w-4" />
               <span className="font-medium">Add Product</span>
             </Link>
-            
+
             {/* Dashboard Dropdown */}
             <div className="relative" onClick={(e) => e.stopPropagation()}>
               <button
@@ -111,18 +112,20 @@ export default function DashboardHeader({
                 <span className="font-medium">Dashboard</span>
                 <ChevronDown className={`h-4 w-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
               </button>
-              
+
               <AnimatePresence>
                 {dropdownOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                    className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl 
+shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
                   >
                     <button
                       onClick={() => switchDashboard('classic')}
-                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${
+                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 
+hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${
                         currentDashboard === 'classic' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700' : ''
                       }`}
                     >
@@ -134,7 +137,8 @@ export default function DashboardHeader({
                     </button>
                     <button
                       onClick={() => switchDashboard('simple')}
-                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 ${
+                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 
+hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 ${
                         currentDashboard === 'simple' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600' : ''
                       }`}
                     >
@@ -146,7 +150,8 @@ export default function DashboardHeader({
                     </button>
                     <button
                       onClick={() => switchDashboard('sophisticated')}
-                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 ${
+                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 
+hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 ${
                         currentDashboard === 'sophisticated' ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600' : ''
                       }`}
                     >
@@ -163,7 +168,25 @@ export default function DashboardHeader({
           </div>
 
           {/* Right side - Controls */}
-          <div className="flex items-center space-x-3"><Link href="/barcode" className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700" title="Barcode Generator"><svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg></Link>
+          <div className="flex items-center space-x-3">
+            <Link 
+              href="/barcode" 
+              className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700" 
+              title="Barcode Generator"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+            </Link>
+            
+            <Link 
+              href="/reports" 
+              className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700" 
+              title="Generate Reports"
+            >
+              <BarChart3 className="h-5 w-5" />
+            </Link>
+
             {onRefresh && (
               <button
                 onClick={onRefresh}
@@ -192,4 +215,3 @@ export default function DashboardHeader({
     </header>
   )
 }
-
