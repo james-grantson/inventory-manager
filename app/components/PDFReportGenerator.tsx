@@ -36,12 +36,19 @@ interface ReportProps {
   products: Product[]
 }
 
+// Extend jsPDF type to include lastAutoTable
+interface jsPDFWithAutoTable extends jsPDF {
+  lastAutoTable?: {
+    finalY: number
+  }
+}
+
 export default function PDFReportGenerator({ products }: ReportProps) {
   const [reportType, setReportType] = useState<'inventory' | 'lowstock' | 'profit' | 'valuation'>('inventory')
   const [category, setCategory] = useState<string>('all')
   const [isGenerating, setIsGenerating] = useState(false)
 
-  // Fix: Convert Set to array properly
+  // Fix: Get unique categories without using Set spread
   const uniqueCategories = products.map(p => p.category).filter((value, index, self) => self.indexOf(value) === index)
   const categories = ['all', ...uniqueCategories]
 
@@ -75,7 +82,7 @@ export default function PDFReportGenerator({ products }: ReportProps) {
     setIsGenerating(true)
     
     try {
-      const doc = new jsPDF()
+      const doc = new jsPDF() as jsPDFWithAutoTable
       const filteredProducts = filterProducts()
       const totals = calculateTotals()
       
@@ -84,21 +91,27 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       doc.setTextColor(44, 62, 80)
       
       let title = 'Inventory Report'
+      let headerColor: [number, number, number] = [52, 152, 219] // Default blue
+      
       switch(reportType) {
         case 'lowstock':
           title = 'Low Stock Alert Report'
+          headerColor = [231, 76, 60] // Red
           doc.setTextColor(231, 76, 60)
           break
         case 'profit':
           title = 'Profit & Loss Report'
+          headerColor = [39, 174, 96] // Green
           doc.setTextColor(39, 174, 96)
           break
         case 'valuation':
           title = 'Inventory Valuation Report'
+          headerColor = [155, 89, 182] // Purple
           doc.setTextColor(155, 89, 182)
           break
         default:
           title = 'Inventory Status Report'
+          headerColor = [52, 152, 219] // Blue
           doc.setTextColor(52, 152, 219)
       }
       
@@ -111,7 +124,7 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       
       // Add summary
       doc.setFontSize(12)
-      doc.setTextColor(52, 152, 219)
+      doc.setTextColor(headerColor[0], headerColor[1], headerColor[2])
       doc.text('Summary', 14, 40)
       
       const summaryData = [
@@ -126,13 +139,16 @@ export default function PDFReportGenerator({ products }: ReportProps) {
         head: [['Metric', 'Value']],
         body: summaryData,
         theme: 'striped',
-        headStyles: { fillColor: [52, 152, 219] }
+        headStyles: { fillColor: headerColor }
       })
+
+      // Get the final Y position after the first table
+      const finalY = (doc as any).lastAutoTable?.finalY || 45
 
       // Add products table
       doc.setFontSize(12)
-      doc.setTextColor(52, 152, 219)
-      doc.text('Products', 14, doc.lastAutoTable.finalY + 15)
+      doc.setTextColor(headerColor[0], headerColor[1], headerColor[2])
+      doc.text('Products', 14, finalY + 15)
       
       const productData = filteredProducts.map(p => [
         p.name,
@@ -144,11 +160,11 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       ])
 
       autoTable(doc, {
-        startY: doc.lastAutoTable.finalY + 20,
+        startY: finalY + 20,
         head: [['Product', 'SKU', 'Category', 'Stock', 'Price', 'Total Value']],
         body: productData,
         theme: 'striped',
-        headStyles: { fillColor: [52, 152, 219] }
+        headStyles: { fillColor: headerColor }
       })
       
       // Add footer
