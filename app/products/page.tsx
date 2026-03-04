@@ -22,6 +22,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'table' | 'gallery'>('table')
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     fetchProducts()
@@ -33,8 +34,10 @@ export default function ProductsPage() {
 
   const fetchProducts = async () => {
     try {
+      setLoading(true)
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
       const data = await res.json()
+      console.log('Fetched products:', data.products) // Debug log
       setProducts(data.products || [])
       setFilteredProducts(data.products || [])
     } catch (error) {
@@ -70,6 +73,10 @@ export default function ProductsPage() {
     } catch (error) {
       console.error('Error:', error)
     }
+  }
+
+  const handleImageError = (productId: string) => {
+    setImageErrors(prev => ({ ...prev, [productId]: true }))
   }
 
   const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
@@ -177,14 +184,17 @@ export default function ProductsPage() {
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredProducts.map((product) => {
                     const status = getStockStatus(product.quantity, product.minstock)
+                    const hasImage = product.image_url && !imageErrors[product.id]
+                    
                     return (
                       <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td className="px-6 py-4">
-                          {product.image_url ? (
+                          {hasImage ? (
                             <img
                               src={product.image_url}
                               alt={product.name}
                               className="w-12 h-12 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                              onError={() => handleImageError(product.id)}
                             />
                           ) : (
                             <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-700">
@@ -232,6 +242,8 @@ export default function ProductsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => {
               const status = getStockStatus(product.quantity, product.minstock)
+              const hasImage = product.image_url && !imageErrors[product.id]
+              
               return (
                 <div
                   key={product.id}
@@ -240,11 +252,12 @@ export default function ProductsPage() {
                 >
                   {/* Image */}
                   <div className="relative h-48 bg-gray-100 dark:bg-gray-900">
-                    {product.image_url ? (
+                    {hasImage ? (
                       <img
                         src={product.image_url}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={() => handleImageError(product.id)}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
