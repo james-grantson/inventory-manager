@@ -402,3 +402,5 @@ export default function BarcodePage() {
     </div>
   )
 }
+
+// Force redeploy: 03/03/2026 17:12:59
