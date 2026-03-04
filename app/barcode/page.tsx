@@ -176,12 +176,11 @@ export default function EnhancedBarcodePage() {
     if (!element) return
     
     try {
-      // Create a canvas element
-      const canvas = document.createElement('canvas')
       const svgString = new XMLSerializer().serializeToString(element)
       const img = new Image()
       
       img.onload = () => {
+        const canvas = document.createElement('canvas')
         canvas.width = img.width
         canvas.height = img.height
         const ctx = canvas.getContext('2d')
@@ -208,10 +207,13 @@ export default function EnhancedBarcodePage() {
     if (!printWindow) return
     
     const barcodeElements = barcodeItems.map(item => {
-      const svg = document.getElementById(`barcode-${item.id}`)?.outerHTML || ''
+      const element = barcodeRefs.current[item.id]
+      if (!element) return ''
+      
+      const svgString = new XMLSerializer().serializeToString(element)
       return `
         <div style="page-break-after: always; text-align: center; padding: 20px; margin-bottom: 20px;">
-          ${svg}
+          ${svgString}
           ${item.name ? `<p style="font-size: 14px; margin-top: 10px;">${item.name}</p>` : ''}
           ${item.quantity ? `<p style="font-size: 12px; color: #666;">Qty: ${item.quantity}</p>` : ''}
           <p style="font-size: 16px; font-weight: bold; margin-top: 5px;">${item.value}</p>
@@ -260,6 +262,10 @@ export default function EnhancedBarcodePage() {
       videoRef.current.srcObject = null
     }
     setScanning(false)
+  }
+
+  const setBarcodeRef = (id: string) => (el: SVGSVGElement | null) => {
+    barcodeRefs.current[id] = el
   }
 
   return (
@@ -562,7 +568,7 @@ export default function EnhancedBarcodePage() {
                       <div className="bg-white p-4 rounded-lg border border-gray-200 dark:border-gray-600 flex justify-center">
                         <svg
                           id={`barcode-${item.id}`}
-                          ref={el => barcodeRefs.current[item.id] = el}
+                          ref={setBarcodeRef(item.id)}
                           className="max-w-full"
                         />
                       </div>
