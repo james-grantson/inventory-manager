@@ -74,7 +74,7 @@ app.get('/api/health', (req, res) => {
         time: new Date().toISOString(),
         database: 'PostgreSQL with Prisma',
         idType: 'UUID',
-        currency: 'Ghana Cedis (GH)',
+        currency: 'Ghana Cedis (GH₵)',
         features: ['image_upload', 'profit_calculation', 'low_stock_alerts']
     });
 });
@@ -82,7 +82,7 @@ app.get('/api/health', (req, res) => {
 // 2. GET ALL PRODUCTS (WITH PROFIT CALCULATION)
 app.get('/api/products', async (req, res) => {
     try {
-        console.log(' Fetching all products...');
+        console.log('📦 Fetching all products...');
         const products = await prisma.product.findMany({
             orderBy: { createdAt: "desc" }
         });
@@ -90,7 +90,7 @@ app.get('/api/products', async (req, res) => {
         // Add profit calculation to all products
         const productsWithProfit = products.map(product => addProfitCalculation(product));
         
-        console.log(` Retrieved ${products.length} products`);
+        console.log(`✅ Retrieved ${products.length} products`);
         res.json({
             success: true,
             products: productsWithProfit,
@@ -98,7 +98,7 @@ app.get('/api/products', async (req, res) => {
             timestamp: new Date().toISOString()
         });
     } catch (error) {
-        console.error(' Error fetching products:', error);
+        console.error('❌ Error fetching products:', error);
         res.status(500).json({ 
             error: 'Failed to fetch products',
             details: error.message 
@@ -382,20 +382,20 @@ app.listen(PORT, async () => {
     console.log('  PUT    /api/products/:id              - Update product (with image)');
     console.log('  DELETE /api/products/:id              - Delete product');
     console.log('='.repeat(60));
-    console.log(' FEATURES:');
-    console.log('   Profit calculation (per item & total)');
-    console.log('   Profit margin percentage');
-    console.log('   Low stock detection');
-    console.log('   UUID product IDs');
-    console.log('   Image upload support');  // ADDED
+    console.log('💰 FEATURES:');
+    console.log('  • Profit calculation (per item & total)');
+    console.log('  • Profit margin percentage');
+    console.log('  • Low stock detection');
+    console.log('  • UUID product IDs');
+    console.log('  • Image upload support');  // ADDED
     console.log('='.repeat(60));
     
     // Check database connection
     try {
         await prisma.$connect();
-        console.log(' Database connection established');
+        console.log('✅ Database connection established');
     } catch (error) {
-        console.error(' Database connection failed:', error);
+        console.error('❌ Database connection failed:', error);
     }
 });
 
