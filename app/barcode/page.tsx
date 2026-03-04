@@ -22,7 +22,6 @@ import {
   FileUp
 } from 'lucide-react'
 import JsBarcode from 'jsbarcode'
-import html2canvas from 'html2canvas'
 
 interface BarcodeItem {
   id: string
@@ -103,7 +102,6 @@ export default function EnhancedBarcodePage() {
     setBarcodeItems([...barcodeItems, newItem])
     setBarcodeValue('')
     
-    // Generate after render
     setTimeout(() => {
       generateBarcode(newItem.value, newItem.id)
     }, 100)
@@ -173,21 +171,36 @@ export default function EnhancedBarcodePage() {
     }, 200)
   }
 
-  const downloadSingle = async (item: BarcodeItem) => {
+  const downloadSingle = (item: BarcodeItem) => {
     const element = barcodeRefs.current[item.id]
     if (!element) return
     
-    const canvas = await html2canvas(element.parentElement?.parentElement || element)
-    const link = document.createElement('a')
-    link.download = `barcode-${item.value}.png`
-    link.href = canvas.toDataURL('image/png')
-    link.click()
+    try {
+      // Create a canvas element
+      const canvas = document.createElement('canvas')
+      const svgString = new XMLSerializer().serializeToString(element)
+      const img = new Image()
+      
+      img.onload = () => {
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')
+        ctx?.drawImage(img, 0, 0)
+        
+        const link = document.createElement('a')
+        link.download = `barcode-${item.value}.png`
+        link.href = canvas.toDataURL('image/png')
+        link.click()
+      }
+      
+      img.src = 'data:image/svg+xml;base64,' + btoa(svgString)
+    } catch (error) {
+      console.error('Download error:', error)
+    }
   }
 
-  const downloadAll = async () => {
-    for (const item of barcodeItems) {
-      await downloadSingle(item)
-    }
+  const downloadAll = () => {
+    barcodeItems.forEach(item => downloadSingle(item))
   }
 
   const printAll = () => {
