@@ -3,11 +3,11 @@
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { 
-  ArrowLeft, 
-  Download, 
-  Printer, 
-  Copy, 
+import {
+  ArrowLeft,
+  Download,
+  Printer,
+  Copy,
   Check,
   Package,
   Barcode as BarcodeIcon,
@@ -66,28 +66,35 @@ export default function BarcodePage() {
   }
 
   const handleDownload = () => {
-    if (barcodeRef.current && canvasRef.current) {
-      // Draw SVG to canvas
+    if (!barcodeRef.current || !canvasRef.current) return
+    
+    try {
       const ctx = canvasRef.current.getContext('2d')
+      if (!ctx) return
+      
       const svgData = new XMLSerializer().serializeToString(barcodeRef.current)
       const img = new Image()
       img.onload = () => {
+        if (!canvasRef.current) return
         canvasRef.current.width = img.width
         canvasRef.current.height = img.height
-        ctx?.drawImage(img, 0, 0)
+        ctx.drawImage(img, 0, 0)
         
-        // Download as PNG
         const link = document.createElement('a')
         link.download = `barcode-${barcodeValue || 'sample'}.png`
         link.href = canvasRef.current.toDataURL('image/png')
         link.click()
       }
       img.src = 'data:image/svg+xml;base64,' + btoa(svgData)
+    } catch (error) {
+      console.error('Download error:', error)
     }
   }
 
   const handlePrint = () => {
-    if (barcodeRef.current) {
+    if (!barcodeRef.current) return
+    
+    try {
       const svgData = new XMLSerializer().serializeToString(barcodeRef.current)
       const printWindow = window.open('', '_blank')
       if (printWindow) {
@@ -127,6 +134,8 @@ export default function BarcodePage() {
         `)
         printWindow.document.close()
       }
+    } catch (error) {
+      console.error('Print error:', error)
     }
   }
 
@@ -366,23 +375,6 @@ export default function BarcodePage() {
           </motion.div>
         </div>
 
-        {/* Barcode Tips */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4"
-        >
-          <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2"> Barcode Tips</h4>
-          <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1 list-disc list-inside">
-            <li>Use SKU numbers for product identification</li>
-            <li>CODE128 supports alphanumeric characters (best for SKUs)</li>
-            <li>EAN13 is standard for retail products (requires 12-13 digits)</li>
-            <li>Download PNG for printing or saving</li>
-            <li>You can print directly from browser</li>
-          </ul>
-        </motion.div>
-
         {/* Back to Products Link */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -402,5 +394,3 @@ export default function BarcodePage() {
     </div>
   )
 }
-
-// Force redeploy: 03/03/2026 17:12:59
