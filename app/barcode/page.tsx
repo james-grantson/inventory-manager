@@ -22,6 +22,7 @@ import {
   FileUp
 } from 'lucide-react'
 import JsBarcode from 'jsbarcode'
+import RealBarcodeScanner from '@/app/components/RealBarcodeScanner'
 
 interface BarcodeItem {
   id: string
@@ -42,9 +43,6 @@ export default function EnhancedBarcodePage() {
   const [margin, setMargin] = useState(10)
   const [viewMode, setViewMode] = useState<'single' | 'bulk' | 'scan'>('single')
   const [bulkText, setBulkText] = useState('')
-  const [scanning, setScanning] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const barcodeRefs = useRef<{ [key: string]: SVGSVGElement | null }>({})
 
   const formats = [
@@ -239,29 +237,6 @@ export default function EnhancedBarcodePage() {
     `)
     printWindow.document.close()
     printWindow.print()
-  }
-
-  const startScanning = async () => {
-    setScanning(true)
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        videoRef.current.play()
-      }
-    } catch (error) {
-      console.error('Camera access error:', error)
-      setScanning(false)
-    }
-  }
-
-  const stopScanning = () => {
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream
-      stream.getTracks().forEach(track => track.stop())
-      videoRef.current.srcObject = null
-    }
-    setScanning(false)
   }
 
   const setBarcodeRef = (id: string) => (el: SVGSVGElement | null) => {
@@ -644,55 +619,22 @@ CEMENT-50KG,Cement 50kg,280"
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-2xl mx-auto"
+            className="max-w-3xl mx-auto"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <ScanLine className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Barcode Scanner</h2>
-                </div>
-                <button
-                  onClick={scanning ? stopScanning : startScanning}
-                  className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                    scanning 
-                      ? 'bg-red-600 hover:bg-red-700 text-white' 
-                      : 'bg-purple-600 hover:bg-purple-700 text-white'
-                  }`}
-                >
-                  <Camera className="h-4 w-4" />
-                  {scanning ? 'Stop Scanning' : 'Start Camera'}
-                </button>
-              </div>
-
-              {scanning ? (
-                <div className="space-y-4">
-                  <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-                    <video
-                      ref={videoRef}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 border-2 border-purple-500 m-8 rounded-lg pointer-events-none"></div>
-                  </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                    Position barcode within the frame to scan
-                  </p>
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                    <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                       Note: Full barcode scanning requires additional libraries. This is a UI mockup for demonstration.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                    <ScanLine className="h-12 w-12 text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400">Click "Start Camera" to begin scanning</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Works with any camera-enabled device</p>
-                </div>
-              )}
-            </div>
+            <RealBarcodeScanner
+              onScan={(value) => {
+                // Add scanned value to barcode list
+                const newItem = {
+                  id: Date.now().toString(),
+                  value: value,
+                  name: `Scanned Item`
+                }
+                setBarcodeItems(prev => [...prev, newItem])
+                setTimeout(() => {
+                  generateBarcode(newItem.value, newItem.id)
+                }, 100)
+              }}
+            />
           </motion.div>
         )}
 
