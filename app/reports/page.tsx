@@ -110,15 +110,7 @@ export default function ReportsPage() {
           <p className="text-gray-500 dark:text-gray-400 text-center py-8">
             No reports generated yet. Use the generator above to create your first report.
           </p>
-        </motion.div-center gap-2">
-            <Download className="h-5 w-5 text-purple-600" />
-            Recent Reports
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-            No reports generated yet. Use the generator above to create your first report.
-          </p>
         </motion.div>
-     >
       </main>
     </div>
   )
