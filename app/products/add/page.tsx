@@ -3,14 +3,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, CheckCircle } from 'lucide-react'
 import ImageUpload from '@/app/components/ImageUpload'
 
 export default function AddProductPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [imageUrl, setImageUrl] = useState<string>('')
+  const [uploadSuccess, setUploadSuccess] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -40,10 +42,18 @@ export default function AddProductPage() {
     }
   }
 
+  const handleImageUploaded = (url: string) => {
+    setImageUrl(url)
+    setUploadSuccess(true)
+    // Hide success message after 3 seconds
+    setTimeout(() => setUploadSuccess(false), 3000)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setSuccessMessage('')
 
     try {
       // Validate required fields
@@ -81,9 +91,13 @@ export default function AddProductPage() {
         throw new Error(data.error || 'Failed to add product')
       }
       
-      console.log('Product added successfully:', data)
-      router.push('/products')
-      router.refresh()
+      setSuccessMessage('Product added successfully!')
+      
+      // Redirect after 2 seconds
+      setTimeout(() => {
+        router.push('/products')
+        router.refresh()
+      }, 2000)
       
     } catch (err: any) {
       console.error('Error adding product:', err)
@@ -109,6 +123,15 @@ export default function AddProductPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+          {/* Success Message */}
+          {successMessage && (
+            <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3 text-green-700 dark:text-green-300">
+              <CheckCircle className="h-5 w-5" />
+              {successMessage}
+            </div>
+          )}
+
+          {/* Error Message */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
               {error}
@@ -119,10 +142,22 @@ export default function AddProductPage() {
             {/* Image Upload Section */}
             <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Product Image</h2>
+              
+              {/* Upload Success Badge */}
+              {uploadSuccess && (
+                <div className="mb-3 p-2 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-2 text-green-700 dark:text-green-300 text-sm">
+                  <CheckCircle className="h-4 w-4" />
+                  Image uploaded successfully!
+                </div>
+              )}
+              
               <ImageUpload
-                onImageUploaded={setImageUrl}
+                onImageUploaded={handleImageUploaded}
                 existingImage={imageUrl}
-                onRemove={() => setImageUrl('')}
+                onRemove={() => {
+                  setImageUrl('')
+                  setUploadSuccess(false)
+                }}
               />
             </div>
 
