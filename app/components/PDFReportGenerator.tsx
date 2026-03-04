@@ -32,12 +32,9 @@ interface ReportProps {
   products: Product[]
 }
 
-// Extend jsPDF type to include autoTable properties
-interface jsPDFWithAutoTable extends jsPDF {
-  lastAutoTable?: {
-    finalY: number
-  }
-  getNumberOfPages?: () => number
+// Define a type for the extended jsPDF with autoTable properties
+type ExtendedPDF = jsPDF & {
+  lastAutoTable?: { finalY: number }
 }
 
 export default function PDFReportGenerator({ products }: ReportProps) {
@@ -76,7 +73,7 @@ export default function PDFReportGenerator({ products }: ReportProps) {
     setIsGenerating(true)
     
     try {
-      const doc = new jsPDF() as jsPDFWithAutoTable
+      const doc = new jsPDF() as ExtendedPDF
       const filteredProducts = filterProducts()
       const totals = calculateTotals()
       
@@ -117,7 +114,7 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       const summaryData = [
         ['Total Products', filteredProducts.length.toString()],
         ['Total Items', totals.totalItems.toString()],
-        ['Total Value', `GH₵${totals.totalValue.toFixed(2)}`],
+        ['Total Value', `GH${totals.totalValue.toFixed(2)}`],
         ['Low Stock Items', totals.lowStockCount.toString()]
       ]
       
@@ -130,7 +127,7 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       })
 
       // Get position after first table
-      const finalY = doc.lastAutoTable?.finalY || 80
+      const finalY = (doc as any).lastAutoTable?.finalY || 80
 
       // Products table
       doc.setFontSize(12)
@@ -154,18 +151,23 @@ export default function PDFReportGenerator({ products }: ReportProps) {
         headStyles: { fillColor: headerColor }
       })
       
-      // Simple footer - just add it on the last page
-      const pageCount = doc.getNumberOfPages ? doc.getNumberOfPages() : 1
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i)
-        doc.setFontSize(8)
-        doc.setTextColor(150, 150, 150)
-        doc.text(
-          `Page ${i} of ${pageCount}`,
-          doc.internal.pageSize.width / 2,
-          doc.internal.pageSize.height - 10,
-          { align: 'center' }
-        )
+      // Add page numbers - use internal API safely
+      try {
+        const pageCount = (doc as any).internal?.getNumberOfPages?.() || 1
+        for (let i = 1; i <= pageCount; i++) {
+          (doc as any).setPage(i)
+          doc.setFontSize(8)
+          doc.setTextColor(150, 150, 150)
+          doc.text(
+            `Page ${i} of ${pageCount}`,
+            doc.internal.pageSize.width / 2,
+            doc.internal.pageSize.height - 10,
+            { align: 'center' }
+          )
+        }
+      } catch (e) {
+        // If page numbering fails, just continue
+        console.log('Page numbering not available')
       }
       
       // Save PDF
