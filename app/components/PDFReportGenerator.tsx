@@ -3,19 +3,15 @@
 import { useState } from 'react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { motion } from 'framer-motion'
 import {
   Download,
-  FileText,
-  BarChart3,
   Package,
   DollarSign,
   AlertTriangle,
   TrendingUp,
   Filter,
   RefreshCw,
-  Printer,
-  Share2
+  Printer
 } from 'lucide-react'
 
 interface Product {
@@ -36,11 +32,12 @@ interface ReportProps {
   products: Product[]
 }
 
-// Extend jsPDF type to include lastAutoTable
+// Extend jsPDF type to include autoTable properties
 interface jsPDFWithAutoTable extends jsPDF {
   lastAutoTable?: {
     finalY: number
   }
+  getNumberOfPages?: () => number
 }
 
 export default function PDFReportGenerator({ products }: ReportProps) {
@@ -48,7 +45,7 @@ export default function PDFReportGenerator({ products }: ReportProps) {
   const [category, setCategory] = useState<string>('all')
   const [isGenerating, setIsGenerating] = useState(false)
 
-  // Fix: Get unique categories without using Set spread
+  // Get unique categories
   const uniqueCategories = products.map(p => p.category).filter((value, index, self) => self.indexOf(value) === index)
   const categories = ['all', ...uniqueCategories]
 
@@ -56,7 +53,6 @@ export default function PDFReportGenerator({ products }: ReportProps) {
     const totalValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0)
     const totalCost = products.reduce((sum, p) => sum + (p.cost * p.quantity), 0)
     const totalProfit = totalValue - totalCost
-    const profitMargin = totalValue > 0 ? (totalProfit / totalValue) * 100 : 0
     
     return {
       totalProducts: products.length,
@@ -64,9 +60,7 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       totalValue,
       totalCost,
       totalProfit,
-      profitMargin,
-      lowStockCount: products.filter(p => p.quantity <= p.minstock).length,
-      outOfStockCount: products.filter(p => p.quantity === 0).length
+      lowStockCount: products.filter(p => p.quantity <= p.minstock).length
     }
   }
 
@@ -86,43 +80,36 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       const filteredProducts = filterProducts()
       const totals = calculateTotals()
       
-      // Add title based on report type
-      doc.setFontSize(20)
-      doc.setTextColor(44, 62, 80)
-      
+      // Set title based on report type
       let title = 'Inventory Report'
-      let headerColor: [number, number, number] = [52, 152, 219] // Default blue
+      let headerColor: [number, number, number] = [52, 152, 219]
       
       switch(reportType) {
         case 'lowstock':
           title = 'Low Stock Alert Report'
-          headerColor = [231, 76, 60] // Red
-          doc.setTextColor(231, 76, 60)
+          headerColor = [231, 76, 60]
           break
         case 'profit':
           title = 'Profit & Loss Report'
-          headerColor = [39, 174, 96] // Green
-          doc.setTextColor(39, 174, 96)
+          headerColor = [39, 174, 96]
           break
         case 'valuation':
           title = 'Inventory Valuation Report'
-          headerColor = [155, 89, 182] // Purple
-          doc.setTextColor(155, 89, 182)
+          headerColor = [155, 89, 182]
           break
-        default:
-          title = 'Inventory Status Report'
-          headerColor = [52, 152, 219] // Blue
-          doc.setTextColor(52, 152, 219)
       }
       
+      // Title
+      doc.setFontSize(20)
+      doc.setTextColor(headerColor[0], headerColor[1], headerColor[2])
       doc.text(title, 14, 22)
       
-      // Add date
+      // Date
       doc.setFontSize(10)
       doc.setTextColor(100, 100, 100)
       doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30)
       
-      // Add summary
+      // Summary
       doc.setFontSize(12)
       doc.setTextColor(headerColor[0], headerColor[1], headerColor[2])
       doc.text('Summary', 14, 40)
@@ -130,7 +117,7 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       const summaryData = [
         ['Total Products', filteredProducts.length.toString()],
         ['Total Items', totals.totalItems.toString()],
-        ['Total Value', `GH${totals.totalValue.toFixed(2)}`],
+        ['Total Value', `GH₵${totals.totalValue.toFixed(2)}`],
         ['Low Stock Items', totals.lowStockCount.toString()]
       ]
       
@@ -142,16 +129,16 @@ export default function PDFReportGenerator({ products }: ReportProps) {
         headStyles: { fillColor: headerColor }
       })
 
-      // Get the final Y position after the first table
-      const finalY = (doc as any).lastAutoTable?.finalY || 45
+      // Get position after first table
+      const finalY = doc.lastAutoTable?.finalY || 80
 
-      // Add products table
+      // Products table
       doc.setFontSize(12)
       doc.setTextColor(headerColor[0], headerColor[1], headerColor[2])
-      doc.text('Products', 14, finalY + 15)
+      doc.text('Products', 14, finalY + 10)
       
       const productData = filteredProducts.map(p => [
-        p.name,
+        p.name.substring(0, 30),
         p.sku,
         p.category,
         p.quantity.toString(),
@@ -160,28 +147,28 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       ])
 
       autoTable(doc, {
-        startY: finalY + 20,
-        head: [['Product', 'SKU', 'Category', 'Stock', 'Price', 'Total Value']],
+        startY: finalY + 15,
+        head: [['Product', 'SKU', 'Category', 'Stock', 'Price', 'Total']],
         body: productData,
         theme: 'striped',
         headStyles: { fillColor: headerColor }
       })
       
-      // Add footer
-      const pageCount = doc.internal.getNumberOfPages()
+      // Simple footer - just add it on the last page
+      const pageCount = doc.getNumberOfPages ? doc.getNumberOfPages() : 1
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i)
         doc.setFontSize(8)
         doc.setTextColor(150, 150, 150)
         doc.text(
-          `Page ${i} of ${pageCount} - Generated by Inventory Manager Pro`,
+          `Page ${i} of ${pageCount}`,
           doc.internal.pageSize.width / 2,
           doc.internal.pageSize.height - 10,
           { align: 'center' }
         )
       }
       
-      // Save with appropriate filename
+      // Save PDF
       const dateStr = new Date().toISOString().split('T')[0]
       doc.save(`${reportType}-report-${dateStr}.pdf`)
       
@@ -200,9 +187,9 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       {/* Report Type Selection */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { type: 'inventory', label: 'Inventory Status', icon: Package, color: 'blue' },
-          { type: 'lowstock', label: 'Low Stock Alert', icon: AlertTriangle, color: 'red' },
-          { type: 'profit', label: 'Profit & Loss', icon: TrendingUp, color: 'green' },
+          { type: 'inventory', label: 'Inventory', icon: Package, color: 'blue' },
+          { type: 'lowstock', label: 'Low Stock', icon: AlertTriangle, color: 'red' },
+          { type: 'profit', label: 'Profit', icon: TrendingUp, color: 'green' },
           { type: 'valuation', label: 'Valuation', icon: DollarSign, color: 'purple' }
         ].map((item) => (
           <button
@@ -261,35 +248,25 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       </div>
 
       {/* Generate Button */}
-      <div className="flex gap-3">
-        <button
-          onClick={generatePDF}
-          disabled={isGenerating}
-          className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
-        >
-          {isGenerating ? (
-            <>
-              <RefreshCw className="h-5 w-5 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Download className="h-5 w-5" />
-              Generate {reportType === 'inventory' ? 'Inventory' : 
-                       reportType === 'lowstock' ? 'Low Stock' : 
-                       reportType === 'profit' ? 'Profit' : 'Valuation'} Report
-            </>
-          )}
-        </button>
-        
-        <button
-          onClick={() => window.print()}
-          className="px-6 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all flex items-center gap-2"
-        >
-          <Printer className="h-5 w-5" />
-          <span className="hidden sm:inline">Print</span>
-        </button>
-      </div>
+      <button
+        onClick={generatePDF}
+        disabled={isGenerating}
+        className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg"
+      >
+        {isGenerating ? (
+          <>
+            <RefreshCw className="h-5 w-5 animate-spin" />
+            Generating...
+          </>
+        ) : (
+          <>
+            <Download className="h-5 w-5" />
+            Generate {reportType === 'inventory' ? 'Inventory' : 
+                     reportType === 'lowstock' ? 'Low Stock' : 
+                     reportType === 'profit' ? 'Profit' : 'Valuation'} Report
+          </>
+        )}
+      </button>
     </div>
   )
 }
