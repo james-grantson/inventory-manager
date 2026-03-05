@@ -43,8 +43,14 @@ export default function EditProductPage() {
         throw new Error('Failed to fetch product')
       }
       
-      const product = await res.json()
-      console.log('Product data received:', product)
+      const response = await res.json()
+      console.log('API Response:', response)
+      
+      // IMPORTANT: Handle both response formats
+      // Some APIs return directly, some return { product: {...} }
+      const product = response.product || response
+      
+      console.log('Product data extracted:', product)
       
       // Populate all form fields with product data
       setFormData({
@@ -320,7 +326,7 @@ export default function EditProductPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Price (GH₵) *
+                    Price (GH) *
                   </label>
                   <input
                     type="number"
@@ -337,7 +343,7 @@ export default function EditProductPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Cost (GH₵) *
+                    Cost (GH) *
                   </label>
                   <input
                     type="number"
