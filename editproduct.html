@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product</title>
+    <title>Edit Product</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8 max-w-2xl">
         <a href="/" class="text-blue-600 mb-4 inline-block"> Back to Dashboard</a>
-        <h1 class="text-2xl font-bold mb-6">Add New Product</h1>
+        <h1 class="text-2xl font-bold mb-6">Edit Product</h1>
         
-        <form id="productForm" class="bg-white p-6 rounded-lg shadow-lg">
+        <div id="loading" class="text-center py-8">Loading...</div>
+        
+        <form id="productForm" class="bg-white p-6 rounded-lg shadow-lg hidden">
             <div class="mb-4">
                 <label class="block text-gray-700 mb-2">Product Name *</label>
                 <input type="text" id="name" required class="w-full p-2 border rounded">
@@ -70,12 +72,41 @@
             </div>
             
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-                Save Product
+                Update Product
             </button>
         </form>
     </div>
 
     <script>
+        const productId = window.location.pathname.split('/').pop();
+        
+        async function loadProduct() {
+            try {
+                const res = await fetch(`/api/products/${productId}`);
+                if (!res.ok) throw new Error('Failed to load product');
+                
+                const data = await res.json();
+                const product = data.product || data;
+                
+                document.getElementById('name').value = product.name || '';
+                document.getElementById('sku').value = product.sku || '';
+                document.getElementById('description').value = product.description || '';
+                document.getElementById('category').value = product.category || '';
+                document.getElementById('price').value = product.price || '';
+                document.getElementById('cost').value = product.cost || '';
+                document.getElementById('quantity').value = product.quantity || '';
+                document.getElementById('minstock').value = product.minstock || 10;
+                document.getElementById('supplier').value = product.supplier || '';
+                document.getElementById('location').value = product.location || '';
+                document.getElementById('image_url').value = product.image_url || '';
+                
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('productForm').classList.remove('hidden');
+            } catch (err) {
+                document.getElementById('loading').innerHTML = 'Error loading product: ' + err.message;
+            }
+        }
+        
         document.getElementById('productForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -94,20 +125,22 @@
             };
             
             try {
-                const res = await fetch('/api/products', {
-                    method: 'POST',
+                const res = await fetch(`/api/products/${productId}`, {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(productData)
                 });
                 
-                if (!res.ok) throw new Error('Failed to create product');
+                if (!res.ok) throw new Error('Failed to update product');
                 
-                alert('Product created successfully!');
+                alert('Product updated successfully!');
                 window.location.href = '/products';
             } catch (err) {
                 alert('Error: ' + err.message);
             }
         });
+        
+        loadProduct();
     </script>
 </body>
 </html>
