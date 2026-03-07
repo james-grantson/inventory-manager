@@ -3,3 +3,5 @@
 export default function HomePage() {
   return <DashboardSwitcher />
 }
+
+// Force redeploy with working backend
