@@ -13,7 +13,8 @@ import {
   Sun,
   Moon,
   Bell,
-  BarChart3
+  BarChart3,
+  Tags
 } from 'lucide-react'
 
 interface DashboardHeaderProps {
@@ -187,6 +188,15 @@ hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap
               <BarChart3 className="h-5 w-5" />
             </Link>
 
+            {/* NEW: Categories Link */}
+            <Link 
+              href="/categories" 
+              className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700" 
+              title="Manage Categories"
+            >
+              <Tags className="h-5 w-5" />
+            </Link>
+
             {onRefresh && (
               <button
                 onClick={onRefresh}
@@ -215,4 +225,3 @@ hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap
     </header>
   )
 }
-
