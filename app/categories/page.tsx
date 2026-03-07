@@ -4,11 +4,16 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Edit, Trash2, ArrowLeft, RefreshCw, Check, X } from 'lucide-react'
 
+interface Category {
+  id: string
+  name: string
+}
+
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [newCategory, setNewCategory] = useState('')
-  const [editingId, setEditingId] = useState(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -60,7 +65,7 @@ export default function CategoriesPage() {
     }
   }
 
-  const updateCategory = async (id) => {
+  const updateCategory = async (id: string) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories/${id}`, {
         method: 'PUT',
@@ -86,7 +91,7 @@ export default function CategoriesPage() {
     }
   }
 
-  const deleteCategory = async (id) => {
+  const deleteCategory = async (id: string) => {
     if (!confirm('Are you sure? This will delete the category.')) return
     
     try {
