@@ -63,7 +63,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     avgProfitMargin: 0
   })
 
-  // Initialize with external products if provided
   useEffect(() => {
     if (externalProducts && externalProducts.length > 0) {
       setProducts(externalProducts)
@@ -75,7 +74,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     }
   }, [externalProducts])
 
-  // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
       filterProducts()
@@ -83,7 +81,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     return () => clearTimeout(timer)
   }, [searchQuery, products, categoryFilter, stockFilter])
 
-  // Auto-refresh every 2 minutes
   useEffect(() => {
     if (!externalProducts) {
       const interval = setInterval(fetchData, 120000)
@@ -91,7 +88,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     }
   }, [externalProducts])
 
-  // Keyboard shortcut: Ctrl+R to refresh
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'r') {
@@ -105,7 +101,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [externalProducts])
 
-  // Load dark mode preference
   useEffect(() => {
     const savedMode = localStorage.getItem('sophisticatedDarkMode')
     if (savedMode) setDarkMode(savedMode === 'true')
@@ -146,7 +141,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     const totalProfit = productList.reduce((sum: number, p: any) => sum + ((p.price - p.cost) * p.quantity), 0)
     const lowStock = productList.filter((p: any) => p.quantity <= p.minstock && p.quantity > 0).length
     const outOfStock = productList.filter((p: any) => p.quantity === 0).length
-    const categories = new Set(productList.map((p: any) => p.category)).size
+    const categories = new Set(productList.map((p: any) => p.category?.name || 'Uncategorized')).size
     
     const avgMargin = productList.length > 0 
       ? productList.reduce((sum, p) => sum + (p.cost > 0 ? ((p.price - p.cost) / p.cost) * 100 : 0), 0) / productList.length
@@ -171,14 +166,14 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
       filtered = filtered.filter(p => 
         p.name?.toLowerCase().includes(query) ||
         p.sku?.toLowerCase().includes(query) ||
-        p.category?.toLowerCase().includes(query) ||
+        p.category?.name?.toLowerCase().includes(query) ||
         p.supplier?.toLowerCase().includes(query) ||
         p.location?.toLowerCase().includes(query)
       )
     }
 
     if (categoryFilter !== 'all') {
-      filtered = filtered.filter(p => p.category === categoryFilter)
+      filtered = filtered.filter(p => (p.category?.name || 'Uncategorized') === categoryFilter)
     }
 
     if (stockFilter === 'low') {
@@ -192,7 +187,15 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     setFilteredProducts(filtered)
   }, [searchQuery, products, categoryFilter, stockFilter])
 
-  const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
+  const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A'
+    try {
+      return new Date(dateString).toLocaleDateString('en-GH', { year: 'numeric', month: 'short', day: 'numeric' })
+    } catch {
+      return 'Invalid date'
+    }
+  }
 
   const getStockStatus = (product: any) => {
     if (product.quantity === 0) {
@@ -232,7 +235,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
   }, [])
 
   const uniqueCategories = useMemo(() => {
-    return Array.from(new Set(products.map(p => p.category)))
+    return Array.from(new Set(products.map(p => p.category?.name || 'Uncategorized')))
   }, [products])
 
   if (loading) {
@@ -269,7 +272,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
 
   return (
     <div className="min-h-screen bg-gradient-light dark:bg-gray-900 transition-colors duration-300">
-      {/* Header with centered buttons */}
       <DashboardHeader 
         title="Sophisticated Inventory" 
         icon={<Sparkles className="h-8 w-8 text-white" />}

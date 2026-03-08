@@ -81,7 +81,15 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
     }
   }
 
-  const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
+  const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A'
+    try {
+      return new Date(dateString).toLocaleDateString('en-GH', { year: 'numeric', month: 'short', day: 'numeric' })
+    } catch {
+      return 'Invalid date'
+    }
+  }
 
   const totalProducts = products.length
   const totalValue = products.reduce((sum, p) => sum + (p.price * p.quantity), 0)
@@ -90,8 +98,10 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
   const outOfStock = products.filter(p => p.quantity === 0).length
   const healthyStock = products.filter(p => p.quantity > (p.minstock || 10)).length
 
+  // Category distribution using category names
   const categories = products.reduce((acc: any, p) => {
-    acc[p.category] = (acc[p.category] || 0) + 1
+    const catName = p.category?.name || 'Uncategorized'
+    acc[catName] = (acc[catName] || 0) + 1
     return acc
   }, {})
 
@@ -117,7 +127,6 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
 
   return (
     <div className="min-h-screen bg-gradient-light dark:bg-gray-900 transition-colors duration-300">
-      {/* Header with centered buttons */}
       <DashboardHeader 
         title="Classic Inventory" 
         icon={<Gem className="h-8 w-8 text-white" />}
@@ -240,8 +249,8 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
                     <p className="text-sm text-gray-500 dark:text-gray-400">{product.description}</p>
                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-400 dark:text-gray-500">
                       <span>SKU: {product.sku}</span>
-                      <span></span>
-                      <span>{product.category}</span>
+                      <span>•</span>
+                      <span>{product.category?.name || 'Uncategorized'}</span>
                     </div>
                   </div>
                   <div className="text-right ml-4">
