@@ -13,10 +13,8 @@ import {
   Sun,
   Moon,
   Bell,
-  BarChart3,
-  Tags
+  BarChart3
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase-client'
 
 interface DashboardHeaderProps {
   title: string
@@ -45,6 +43,8 @@ export default function DashboardHeader({
   const switchDashboard = (dashboard: string) => {
     setDropdownOpen(false)
     localStorage.setItem('dashboardStyle', dashboard)
+
+    // Force a hard refresh to ensure all components reload with new state
     window.location.href = '/'
   }
 
@@ -55,11 +55,6 @@ export default function DashboardHeader({
       case 'sophisticated': return <Sparkles className="h-4 w-4" />
       default: return <Layout className="h-4 w-4" />
     }
-  }
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
   }
 
   return (
@@ -192,14 +187,6 @@ hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap
               <BarChart3 className="h-5 w-5" />
             </Link>
 
-            <Link 
-              href="/categories" 
-              className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700" 
-              title="Manage Categories"
-            >
-              <Tags className="h-5 w-5" />
-            </Link>
-
             {onRefresh && (
               <button
                 onClick={onRefresh}
@@ -221,15 +208,6 @@ hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap
             <button className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700 relative">
               <Bell className="h-5 w-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-            </button>
-            <button
-              onClick={handleLogout}
-              className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700"
-              title="Logout"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
             </button>
           </div>
         </div>
