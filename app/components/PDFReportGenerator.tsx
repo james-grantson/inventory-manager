@@ -19,7 +19,7 @@ interface Product {
   name: string
   sku: string
   description: string
-  category: string
+  category: { id: string; name: string } | null  // Updated: category is now an object
   price: number
   cost: number
   quantity: number
@@ -42,8 +42,8 @@ export default function PDFReportGenerator({ products }: ReportProps) {
   const [category, setCategory] = useState<string>('all')
   const [isGenerating, setIsGenerating] = useState(false)
 
-  // Get unique categories
-  const uniqueCategories = products.map(p => p.category).filter((value, index, self) => self.indexOf(value) === index)
+  // Get unique category names
+  const uniqueCategories = Array.from(new Set(products.map(p => p.category?.name).filter(Boolean)))
   const categories = ['all', ...uniqueCategories]
 
   const calculateTotals = () => {
@@ -64,7 +64,7 @@ export default function PDFReportGenerator({ products }: ReportProps) {
   const filterProducts = () => {
     let filtered = [...products]
     if (category !== 'all') {
-      filtered = filtered.filter(p => p.category === category)
+      filtered = filtered.filter(p => p.category?.name === category)
     }
     return filtered
   }
@@ -137,7 +137,7 @@ export default function PDFReportGenerator({ products }: ReportProps) {
       const productData = filteredProducts.map(p => [
         p.name.substring(0, 30),
         p.sku,
-        p.category,
+        p.category?.name || 'Uncategorized',  // Use category name
         p.quantity.toString(),
         `GH${p.price.toFixed(2)}`,
         `GH${(p.price * p.quantity).toFixed(2)}`
