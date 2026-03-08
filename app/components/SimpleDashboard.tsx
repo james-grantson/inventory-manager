@@ -47,7 +47,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
     categories: 0
   })
 
-  // Initialize with external products if provided
   useEffect(() => {
     if (externalProducts && externalProducts.length > 0) {
       setProducts(externalProducts)
@@ -59,7 +58,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
     }
   }, [externalProducts])
 
-  // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
       filterProducts()
@@ -67,7 +65,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
     return () => clearTimeout(timer)
   }, [searchQuery, products, categoryFilter, stockFilter])
 
-  // Auto-refresh every 2 minutes (only when not using external products)
   useEffect(() => {
     if (!externalProducts) {
       const interval = setInterval(fetchData, 120000)
@@ -75,7 +72,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
     }
   }, [externalProducts])
 
-  // Keyboard shortcut: Ctrl+R to refresh
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === 'r') {
@@ -89,12 +85,9 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [externalProducts])
 
-  // Load dark mode preference
   useEffect(() => {
     const savedMode = localStorage.getItem('simpleDarkMode')
     if (savedMode) setDarkMode(savedMode === 'true')
-    
-    // Apply dark mode to html element
     if (savedMode === 'true') {
       document.documentElement.classList.add('dark')
     } else {
@@ -116,14 +109,12 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
       setError('')
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
       if (!res.ok) throw new Error('Failed to fetch')
-      
       const data = await res.json()
       const productList = data.products || []
       setProducts(productList)
       setFilteredProducts(productList)
       setLastUpdated(new Date())
       calculateStats(productList)
-
     } catch (error) {
       console.error('Error:', error)
       setError('Failed to load products')
@@ -137,7 +128,8 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
     const totalProfit = productList.reduce((sum: number, p: any) => sum + ((p.price - p.cost) * p.quantity), 0)
     const lowStock = productList.filter((p: any) => p.quantity <= p.minstock && p.quantity > 0).length
     const outOfStock = productList.filter((p: any) => p.quantity === 0).length
-    const categories = new Set(productList.map((p: any) => p.category)).size
+    // Use category.name for unique count
+    const categories = new Set(productList.map((p: any) => p.category?.name || 'Uncategorized')).size
 
     setStats({
       totalProducts: productList.length,
@@ -157,7 +149,7 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
       filtered = filtered.filter(p => 
         p.name?.toLowerCase().includes(query) ||
         p.sku?.toLowerCase().includes(query) ||
-        p.category?.toLowerCase().includes(query) ||
+        p.category?.name?.toLowerCase().includes(query) ||
         p.supplier?.toLowerCase().includes(query) ||
         p.location?.toLowerCase().includes(query) ||
         p.description?.toLowerCase().includes(query)
@@ -165,7 +157,7 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
     }
 
     if (categoryFilter !== 'all') {
-      filtered = filtered.filter(p => p.category === categoryFilter)
+      filtered = filtered.filter(p => (p.category?.name || 'Uncategorized') === categoryFilter)
     }
 
     if (stockFilter === 'low') {
@@ -179,7 +171,7 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
     setFilteredProducts(filtered)
   }, [searchQuery, products, categoryFilter, stockFilter])
 
-  const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
+  const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
 
   const getStockStatus = (product: any) => {
     if (product.quantity === 0) {
@@ -215,7 +207,7 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
   }, [])
 
   const uniqueCategories = useMemo(() => {
-    return Array.from(new Set(products.map(p => p.category)))
+    return Array.from(new Set(products.map(p => p.category?.name || 'Uncategorized')))
   }, [products])
 
   if (loading) {
@@ -247,7 +239,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
 
   return (
     <div className="min-h-screen bg-gradient-light dark:bg-gray-900 transition-colors duration-300">
-      {/* Header with centered buttons */}
       <DashboardHeader 
         title="Simple Inventory" 
         icon={<Layout className="h-8 w-8 text-white" />}
@@ -273,7 +264,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
               </div>
             </div>
           </div>
-
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
@@ -285,7 +275,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
               </div>
             </div>
           </div>
-
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
@@ -297,7 +286,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
               </div>
             </div>
           </div>
-
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
@@ -309,7 +297,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
               </div>
             </div>
           </div>
-
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
@@ -376,7 +363,6 @@ export function SimpleDashboard({ products: externalProducts }: SimpleDashboardP
               </button>
             </div>
           </div>
-
           <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
             Press <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded border border-gray-300 dark:border-gray-600">ESC</kbd> to clear search
           </div>
