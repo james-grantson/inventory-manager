@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { 
+import {
   Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
+  Search,
+  Edit,
+  Trash2,
   Image as ImageIcon,
   Package,
   RefreshCw,
@@ -37,7 +37,7 @@ export default function ProductsPage() {
       setLoading(true)
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
       const data = await res.json()
-      console.log('Fetched products:', data.products) // Debug log
+      console.log('Fetched products:', data.products)
       setProducts(data.products || [])
       setFilteredProducts(data.products || [])
     } catch (error) {
@@ -54,10 +54,10 @@ export default function ProductsPage() {
     }
 
     const query = searchQuery.toLowerCase()
-    const filtered = products.filter(p => 
+    const filtered = products.filter(p =>
       p.name?.toLowerCase().includes(query) ||
       p.sku?.toLowerCase().includes(query) ||
-      p.category?.toLowerCase().includes(query)
+      p.category?.name?.toLowerCase().includes(query) // If you have category name relation
     )
     setFilteredProducts(filtered)
   }
@@ -79,7 +79,20 @@ export default function ProductsPage() {
     setImageErrors(prev => ({ ...prev, [productId]: true }))
   }
 
-  const formatCurrency = (amount: number) => `GH${amount.toFixed(2)}`
+  const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-GH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return 'Invalid date';
+    }
+  }
 
   const getStockStatus = (quantity: number, minstock: number) => {
     if (quantity === 0) return { label: 'Out of Stock', class: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300' }
@@ -106,7 +119,7 @@ export default function ProductsPage() {
               {filteredProducts.length} products found
             </p>
           </div>
-          
+
           <div className="flex gap-3">
             {/* View Toggle */}
             <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 border border-gray-200 dark:border-gray-700">
@@ -114,7 +127,7 @@ export default function ProductsPage() {
                 onClick={() => setViewMode('table')}
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === 'table' 
-                    ? 'bg-white dark:bg-gray-700 shadow-sm' 
+                    ? 'bg-white dark:bg-gray-700 shadow-sm'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
                 title="Table View"
@@ -124,8 +137,8 @@ export default function ProductsPage() {
               <button
                 onClick={() => setViewMode('gallery')}
                 className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'gallery' 
-                    ? 'bg-white dark:bg-gray-700 shadow-sm' 
+                  viewMode === 'gallery'
+                    ? 'bg-white dark:bg-gray-700 shadow-sm'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
                 title="Gallery View"
@@ -177,6 +190,7 @@ export default function ProductsPage() {
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Category</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Price</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Stock</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Added</th> {/* New column */}
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Status</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                   </tr>
@@ -185,7 +199,7 @@ export default function ProductsPage() {
                   {filteredProducts.map((product) => {
                     const status = getStockStatus(product.quantity, product.minstock)
                     const hasImage = product.image_url && !imageErrors[product.id]
-                    
+
                     return (
                       <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td className="px-6 py-4">
@@ -204,9 +218,12 @@ export default function ProductsPage() {
                         </td>
                         <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{product.name}</td>
                         <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{product.sku}</td>
-                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{product.category}</td>
+                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
+                          {product.category?.name || 'Uncategorized'}
+                        </td>
                         <td className="px-6 py-4 font-medium text-green-600 dark:text-green-400">{formatCurrency(product.price)}</td>
                         <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{product.quantity}</td>
+                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{formatDate(product.createdAt)}</td>
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.class}`}>
                             {status.label}
@@ -238,12 +255,12 @@ export default function ProductsPage() {
             </div>
           </div>
         ) : (
-          /* Gallery View */
+          /* Gallery View (add date formatting similarly if needed) */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product) => {
               const status = getStockStatus(product.quantity, product.minstock)
               const hasImage = product.image_url && !imageErrors[product.id]
-              
+
               return (
                 <div
                   key={product.id}
@@ -264,7 +281,7 @@ export default function ProductsPage() {
                         <ImageIcon className="h-16 w-16 text-gray-400" />
                       </div>
                     )}
-                    
+
                     {/* Status Badge */}
                     <div className="absolute top-3 right-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.class}`}>
@@ -303,10 +320,10 @@ export default function ProductsPage() {
                       {product.name}
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                      SKU: {product.sku}  {product.category}
+                      SKU: {product.sku} • {product.category?.name || 'Uncategorized'}
                     </p>
-                    
-                    <div className="flex justify-between items-center">
+
+                    <div className="flex justify-between items-center mb-2">
                       <span className="text-lg font-bold text-green-600 dark:text-green-400">
                         {formatCurrency(product.price)}
                       </span>
@@ -314,6 +331,11 @@ export default function ProductsPage() {
                         Stock: {product.quantity}
                       </span>
                     </div>
+
+                    {/* Added date */}
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Added: {formatDate(product.createdAt)}
+                    </p>
 
                     {product.description && (
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
