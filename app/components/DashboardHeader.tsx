@@ -14,7 +14,10 @@ import {
   Moon,
   Bell,
   BarChart3,
-  Tags
+  Tags,
+  Mail,
+  LogOut,
+  User
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 
@@ -41,20 +44,22 @@ export default function DashboardHeader({
 }: DashboardHeaderProps) {
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserEmail(user.email)
+      }
+    }
+    getUser()
+  }, [])
 
   const switchDashboard = (dashboard: string) => {
     setDropdownOpen(false)
     localStorage.setItem('dashboardStyle', dashboard)
     window.location.href = '/'
-  }
-
-  const getDashboardIcon = (type: string) => {
-    switch(type) {
-      case 'classic': return <Gem className="h-4 w-4" />
-      case 'simple': return <Layout className="h-4 w-4" />
-      case 'sophisticated': return <Sparkles className="h-4 w-4" />
-      default: return <Layout className="h-4 w-4" />
-    }
   }
 
   const handleLogout = async () => {
@@ -124,13 +129,11 @@ export default function DashboardHeader({
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl 
-shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+                    className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
                   >
                     <button
                       onClick={() => switchDashboard('classic')}
-                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 
-hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${
+                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${
                         currentDashboard === 'classic' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700' : ''
                       }`}
                     >
@@ -142,8 +145,7 @@ hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap
                     </button>
                     <button
                       onClick={() => switchDashboard('simple')}
-                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 
-hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 ${
+                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 ${
                         currentDashboard === 'simple' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600' : ''
                       }`}
                     >
@@ -155,8 +157,7 @@ hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap
                     </button>
                     <button
                       onClick={() => switchDashboard('sophisticated')}
-                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 
-hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 ${
+                      className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 border-t border-gray-200 dark:border-gray-700 ${
                         currentDashboard === 'sophisticated' ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600' : ''
                       }`}
                     >
@@ -211,6 +212,19 @@ hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap
                 </svg>
               </button>
             )}
+
+            {/* User email display with profile link */}
+            <Link
+              href="/profile"
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors"
+              title="View Profile"
+            >
+              <Mail className="h-4 w-4 text-gray-500" />
+              <span className="text-sm text-gray-700 dark:text-gray-300 max-w-[150px] truncate">
+                {userEmail || 'Loading...'}
+              </span>
+            </Link>
+
             <button
               onClick={() => setDarkMode(!darkMode)}
               className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700"
@@ -218,18 +232,18 @@ hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap
             >
               {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
+
             <button className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700 relative">
               <Bell className="h-5 w-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             </button>
+
             <button
               onClick={handleLogout}
               className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700"
               title="Logout"
             >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <LogOut className="h-5 w-5" />
             </button>
           </div>
         </div>
