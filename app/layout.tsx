@@ -1,9 +1,6 @@
-﻿'use client';
-
-import { Inter } from 'next/font/google';
+﻿import { Inter } from 'next/font/google';
 import './globals.css';
-import BackendStatus from '@/app/components/BackendStatus';
-import { UserProvider } from '@/contexts/UserContext';
+import ClientLayoutWrapper from './ClientLayoutWrapper';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -20,10 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`}>
       <body className="font-sans antialiased bg-gray-50">
-        <UserProvider>
-          {children}
-          <BackendStatus />
-        </UserProvider>
+        <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
       </body>
     </html>
   );
