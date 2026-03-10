@@ -20,6 +20,7 @@ import {
   User
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
+import { useUser } from '@/contexts/UserContext'
 
 interface DashboardHeaderProps {
   title: string
@@ -45,12 +46,12 @@ export default function DashboardHeader({
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const { profile } = useUser()
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // Handle case where email might be undefined
         setUserEmail(user.email ?? null)
       }
     }
@@ -105,13 +106,16 @@ export default function DashboardHeader({
 
           {/* Center - Action Buttons */}
           <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-3">
-            <Link
-              href="/products/add"
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all duration-300 hover:scale-105"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="font-medium">Add Product</span>
-            </Link>
+            {/* Add Product - only for admin/manager */}
+            {profile?.role !== 'cashier' && (
+              <Link
+                href="/products/add"
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all duration-300 hover:scale-105"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="font-medium">Add Product</span>
+              </Link>
+            )}
 
             {/* Dashboard Dropdown */}
             <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -176,6 +180,17 @@ export default function DashboardHeader({
 
           {/* Right side - Controls */}
           <div className="flex items-center space-x-3">
+            {/* POS Link */}
+            <Link 
+              href="/pos" 
+              className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700" 
+              title="Point of Sale"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </Link>
+
             <Link 
               href="/barcode" 
               className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700" 
@@ -212,6 +227,19 @@ export default function DashboardHeader({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </button>
+            )}
+
+            {/* Admin Users Link – only for admin */}
+            {profile?.role === 'admin' && (
+              <Link
+                href="/admin/users"
+                className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700"
+                title="Manage Users"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </Link>
             )}
 
             {/* User email display with profile link */}
