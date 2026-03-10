@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import DashboardHeader from './components/DashboardHeader'
+import { getAuthToken } from '@/lib/auth'
 import { 
   Package, 
   DollarSign, 
@@ -70,7 +71,14 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const data = await res.json()
       setProducts(data.products || [])
       setLastUpdated(new Date())
@@ -98,7 +106,6 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
   const outOfStock = products.filter(p => p.quantity === 0).length
   const healthyStock = products.filter(p => p.quantity > (p.minstock || 10)).length
 
-  // Category distribution using category names
   const categories = products.reduce((acc: any, p) => {
     const catName = p.category?.name || 'Uncategorized'
     acc[catName] = (acc[catName] || 0) + 1

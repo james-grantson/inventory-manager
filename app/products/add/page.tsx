@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import ImageUpload from '@/app/components/ImageUpload'
+import AuthGuard from '@/app/components/AuthGuard'
+import { getAuthToken } from '@/lib/auth'
 
 interface Category {
   id: string
@@ -22,7 +24,7 @@ export default function AddProductPage() {
     name: '',
     sku: '',
     description: '',
-    categoryId: '',  // Changed from category to categoryId
+    categoryId: '',
     price: '',
     cost: '',
     quantity: '',
@@ -31,7 +33,6 @@ export default function AddProductPage() {
     location: ''
   })
 
-  // Fetch categories on mount
   useEffect(() => {
     fetchCategories()
   }, [])
@@ -39,7 +40,14 @@ export default function AddProductPage() {
   const fetchCategories = async () => {
     try {
       setLoadingCategories(true)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`)
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const data = await res.json()
       setCategories(data)
     } catch (err) {
@@ -72,11 +80,17 @@ export default function AddProductPage() {
         throw new Error('Please fill in all required fields')
       }
 
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+
       const productData = {
         name: formData.name,
         sku: formData.sku || generateSKU(),
         description: formData.description || '',
-        categoryId: formData.categoryId,  // Send categoryId, not category string
+        categoryId: formData.categoryId,
         price: parseFloat(formData.price),
         cost: parseFloat(formData.cost),
         quantity: parseInt(formData.quantity),
@@ -88,7 +102,10 @@ export default function AddProductPage() {
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify(productData)
       })
 
@@ -108,194 +125,191 @@ export default function AddProductPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-light dark:bg-gray-900">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/products" className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Add New Product</h1>
-        </div>
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-light dark:bg-gray-900">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center gap-4 mb-8">
+            <Link href="/products" className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            </Link>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Add New Product</h1>
+          </div>
 
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
-              {error}
-            </div>
-          )}
+          <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700">
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+                {error}
+              </div>
+            )}
 
-          <div className="space-y-6">
-            {/* Image Upload */}
-            <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Product Image</h2>
-              <ImageUpload onImageUploaded={setImageUrl} existingImage={imageUrl} onRemove={() => setImageUrl('')} />
-            </div>
+            <div className="space-y-6">
+              <div className="border-b pb-6">
+                <h2 className="text-lg font-semibold mb-4">Product Image</h2>
+                <ImageUpload onImageUploaded={setImageUrl} existingImage={imageUrl} onRemove={() => setImageUrl('')} />
+              </div>
 
-            {/* Basic Info */}
-            <div>
-              <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Product Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">SKU</label>
-                  <input
-                    type="text"
-                    name="sku"
-                    value={formData.sku}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
-                    placeholder="Auto-generated if empty"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate</p>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-2">Description</label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
-                  />
-                </div>
-
-                {/* Category Dropdown */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Category *</label>
-                  {loadingCategories ? (
-                    <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Loading categories...</span>
-                    </div>
-                  ) : categories.length === 0 ? (
-                    <div className="px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 border rounded-lg text-yellow-700 dark:text-yellow-300">
-                      No categories found. Please add categories first.
-                    </div>
-                  ) : (
-                    <select
-                      name="categoryId"
-                      value={formData.categoryId}
+              <div>
+                <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Product Name *</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
                       onChange={handleChange}
                       required
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
-                    >
-                      <option value="">Select a category</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
-                  )}
-                </div>
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Supplier</label>
-                  <input
-                    type="text"
-                    name="supplier"
-                    value={formData.supplier}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">SKU</label>
+                    <input
+                      type="text"
+                      name="sku"
+                      value={formData.sku}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
+                      placeholder="Auto-generated if empty"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate</p>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Location</label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
-                  />
-                </div>
-              </div>
-            </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium mb-2">Description</label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      rows={3}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
+                    />
+                  </div>
 
-            {/* Pricing & Stock */}
-            <div className="border-t pt-6">
-              <h2 className="text-lg font-semibold mb-4">Pricing & Stock</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Price (GH) *</label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    step="0.01"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Category *</label>
+                    {loadingCategories ? (
+                      <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading categories...</span>
+                      </div>
+                    ) : categories.length === 0 ? (
+                      <div className="px-4 py-3 bg-yellow-50 dark:bg-yellow-900/20 border rounded-lg text-yellow-700 dark:text-yellow-300">
+                        No categories found. Please add categories first.
+                      </div>
+                    ) : (
+                      <select
+                        name="categoryId"
+                        value={formData.categoryId}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
+                      >
+                        <option value="">Select a category</option>
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Cost (GH) *</label>
-                  <input
-                    type="number"
-                    name="cost"
-                    value={formData.cost}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    step="0.01"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Supplier</label>
+                    <input
+                      type="text"
+                      name="supplier"
+                      value={formData.supplier}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Quantity *</label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Min Stock *</label>
-                  <input
-                    type="number"
-                    name="minstock"
-                    value={formData.minstock}
-                    onChange={handleChange}
-                    required
-                    min="0"
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Location</label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex justify-end pt-6 border-t">
-              <button
-                type="submit"
-                disabled={loading || loadingCategories || categories.length === 0}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl flex items-center gap-2 disabled:opacity-50 shadow-lg"
-              >
-                {loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Saving...</> : <><Save className="h-5 w-5" /> Save Product</>}
-              </button>
+              <div className="border-t pt-6">
+                <h2 className="text-lg font-semibold mb-4">Pricing & Stock</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Price (GH) *</label>
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleChange}
+                      required
+                      min="0"
+                      step="0.01"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cost (GH) *</label>
+                    <input
+                      type="number"
+                      name="cost"
+                      value={formData.cost}
+                      onChange={handleChange}
+                      required
+                      min="0"
+                      step="0.01"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Quantity *</label>
+                    <input
+                      type="number"
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleChange}
+                      required
+                      min="0"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Min Stock *</label>
+                    <input
+                      type="number"
+                      name="minstock"
+                      value={formData.minstock}
+                      onChange={handleChange}
+                      required
+                      min="0"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t">
+                <button
+                  type="submit"
+                  disabled={loading || loadingCategories || categories.length === 0}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl flex items-center gap-2 disabled:opacity-50 shadow-lg"
+                >
+                  {loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Saving...</> : <><Save className="h-5 w-5" /> Save Product</>}
+                </button>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   )
 }

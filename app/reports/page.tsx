@@ -5,8 +5,12 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, FileText, BarChart3, Download, RefreshCw } from 'lucide-react'
 import PDFReportGenerator from '@/app/components/PDFReportGenerator'
+import AuthGuard from '@/app/components/AuthGuard'
+import { getAuthToken } from '@/lib/auth'
+import { useRouter } from 'next/navigation'
 
 export default function ReportsPage() {
+  const router = useRouter()
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -18,7 +22,14 @@ export default function ReportsPage() {
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const data = await res.json()
       setProducts(data.products || [])
     } catch (error) {
@@ -57,61 +68,61 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-light dark:bg-gray-900 transition-colors duration-300">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-            </Link>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 transition-colors duration-300">
+        <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/"
+                className="p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+              </Link>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Generate professional PDF reports</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Generate professional PDF reports</p>
-              </div>
+              <button
+                onClick={fetchProducts}
+                className="ml-auto p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Refresh Data"
+              >
+                <RefreshCw className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              </button>
             </div>
-            <button
-              onClick={fetchProducts}
-              className="ml-auto p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              title="Refresh Data"
-            >
-              <RefreshCw className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-            </button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <PDFReportGenerator products={products} />
-        </motion.div>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <PDFReportGenerator products={products} />
+          </motion.div>
 
-        {/* Report History (Placeholder) */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mt-8 bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700"
-        >
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Download className="h-5 w-5 text-purple-600" />
-            Recent Reports
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-            No reports generated yet. Use the generator above to create your first report.
-          </p>
-        </motion.div>
-      </main>
-    </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-8 bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700"
+          >
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Download className="h-5 w-5 text-purple-600" />
+              Recent Reports
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+              No reports generated yet. Use the generator above to create your first report.
+            </p>
+          </motion.div>
+        </main>
+      </div>
+    </AuthGuard>
   )
 }

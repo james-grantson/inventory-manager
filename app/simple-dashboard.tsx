@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import DashboardHeader from './components/DashboardHeader'
+import { getAuthToken } from '@/lib/auth'
 import { Package, DollarSign, AlertTriangle, TrendingUp, TrendingDown, Minus, Layout } from 'lucide-react'
 
 interface SimpleDashboardProps {
@@ -37,7 +38,14 @@ export default function SimpleDashboard({ products: externalProducts }: SimpleDa
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const data = await res.json()
       setProducts(data.products || [])
       setLastUpdated(new Date())

@@ -36,6 +36,7 @@ import {
   Layout
 } from 'lucide-react'
 import DashboardHeader from './components/DashboardHeader'
+import { getAuthToken } from '@/lib/auth'
 
 interface SophisticatedDashboardProps {
   products?: any[]
@@ -118,16 +119,21 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
   const fetchData = async () => {
     try {
       setError('')
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       if (!res.ok) throw new Error('Failed to fetch')
-      
       const data = await res.json()
       const productList = data.products || []
       setProducts(productList)
       setFilteredProducts(productList)
       setLastUpdated(new Date())
       calculateStats(productList)
-
     } catch (error) {
       console.error('Error:', error)
       setError('Failed to load products')
@@ -142,7 +148,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     const lowStock = productList.filter((p: any) => p.quantity <= p.minstock && p.quantity > 0).length
     const outOfStock = productList.filter((p: any) => p.quantity === 0).length
     const categories = new Set(productList.map((p: any) => p.category?.name || 'Uncategorized')).size
-    
     const avgMargin = productList.length > 0 
       ? productList.reduce((sum, p) => sum + (p.cost > 0 ? ((p.price - p.cost) / p.cost) * 100 : 0), 0) / productList.length
       : 0
@@ -512,8 +517,14 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                         onClick={async () => {
                           if (confirm('Are you sure?')) {
                             try {
+                              const token = await getAuthToken()
+                              if (!token) {
+                                router.push('/login')
+                                return
+                              }
                               await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${product.id}`, {
-                                method: 'DELETE'
+                                method: 'DELETE',
+                                headers: { Authorization: `Bearer ${token}` }
                               })
                               fetchData()
                             } catch (error) {

@@ -1,9 +1,10 @@
-﻿import DashboardSwitcher from './dashboard-switcher'
+﻿import AuthGuard from './components/AuthGuard';
+import DashboardSwitcher from './dashboard-switcher';
 
 export default function HomePage() {
-  return <DashboardSwitcher />
+  return (
+    <AuthGuard>
+      <DashboardSwitcher />
+    </AuthGuard>
+  );
 }
-
-// Force redeploy with working backend
-
-// Force clean redeploy

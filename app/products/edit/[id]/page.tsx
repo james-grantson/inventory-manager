@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, Loader2, Trash2 } from 'lucide-react'
 import ImageUpload from '@/app/components/ImageUpload'
+import AuthGuard from '@/app/components/AuthGuard'
+import { getAuthToken } from '@/lib/auth'
 
 interface Category {
   id: string
@@ -40,7 +42,14 @@ export default function EditProductPage() {
   const fetchCategories = async () => {
     try {
       setLoadingCategories(true)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`)
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const data = await res.json()
       setCategories(data)
     } catch (err) {
@@ -52,8 +61,15 @@ export default function EditProductPage() {
 
   const fetchProduct = async () => {
     try {
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
       const productId = params.id
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       if (!res.ok) throw new Error('Failed to fetch product')
       const data = await res.json()
       const product = data.product || data
@@ -89,6 +105,12 @@ export default function EditProductPage() {
     setError('')
 
     try {
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+
       const productData = {
         ...formData,
         price: parseFloat(formData.price),
@@ -100,7 +122,10 @@ export default function EditProductPage() {
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${params.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify(productData)
       })
 
@@ -117,8 +142,14 @@ export default function EditProductPage() {
   const handleDelete = async () => {
     if (!confirm('Delete this product?')) return
     try {
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${params.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
       })
       router.push('/products')
     } catch (err) {
@@ -135,101 +166,102 @@ export default function EditProductPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-light dark:bg-gray-900">
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Link href="/products" className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-2xl font-bold">Edit Product</h1>
+    <AuthGuard>
+      <div className="min-h-screen bg-gradient-light dark:bg-gray-900">
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <Link href="/products" className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <h1 className="text-2xl font-bold">Edit Product</h1>
+            </div>
+            <button onClick={handleDelete} className="p-2 bg-red-100 dark:bg-red-900/20 text-red-600 rounded-lg">
+              <Trash2 className="h-5 w-5" />
+            </button>
           </div>
-          <button onClick={handleDelete} className="p-2 bg-red-100 dark:bg-red-900/20 text-red-600 rounded-lg">
-            <Trash2 className="h-5 w-5" />
-          </button>
+
+          <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border">
+            {error && <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 rounded-lg">{error}</div>}
+
+            <div className="space-y-6">
+              <div className="border-b pb-6">
+                <h2 className="text-lg font-semibold mb-4">Product Image</h2>
+                <ImageUpload onImageUploaded={setImageUrl} existingImage={imageUrl} onRemove={() => setImageUrl('')} />
+              </div>
+
+              <div>
+                <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Name *</label>
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">SKU</label>
+                    <input type="text" name="sku" value={formData.sku} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium mb-2">Description</label>
+                    <textarea name="description" value={formData.description} onChange={handleChange} rows={3} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Category *</label>
+                    <select name="categoryId" value={formData.categoryId} onChange={handleChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg">
+                      <option value="">Select a category</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Supplier</label>
+                    <input type="text" name="supplier" value={formData.supplier} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Location</label>
+                    <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <h2 className="text-lg font-semibold mb-4">Pricing & Stock</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Price (GH) *</label>
+                    <input type="number" name="price" value={formData.price} onChange={handleChange} required min="0" step="0.01" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Cost (GH) *</label>
+                    <input type="number" name="cost" value={formData.cost} onChange={handleChange} required min="0" step="0.01" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Quantity *</label>
+                    <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} required min="0" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Min Stock *</label>
+                    <input type="number" name="minstock" value={formData.minstock} onChange={handleChange} required min="0" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl flex items-center gap-2 disabled:opacity-50"
+                >
+                  {saving ? <><Loader2 className="h-5 w-5 animate-spin" /> Saving...</> : <><Save className="h-5 w-5" /> Save Changes</>}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
-
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border">
-          {error && <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 text-red-700 rounded-lg">{error}</div>}
-
-          <div className="space-y-6">
-            <div className="border-b pb-6">
-              <h2 className="text-lg font-semibold mb-4">Product Image</h2>
-              <ImageUpload onImageUploaded={setImageUrl} existingImage={imageUrl} onRemove={() => setImageUrl('')} />
-            </div>
-
-            <div>
-              <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Name *</label>
-                  <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">SKU</label>
-                  <input type="text" name="sku" value={formData.sku} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-2">Description</label>
-                  <textarea name="description" value={formData.description} onChange={handleChange} rows={3} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
-                </div>
-
-                {/* Category Dropdown */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Category *</label>
-                  <select name="categoryId" value={formData.categoryId} onChange={handleChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg">
-                    <option value="">Select a category</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Supplier</label>
-                  <input type="text" name="supplier" value={formData.supplier} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Location</label>
-                  <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-6">
-              <h2 className="text-lg font-semibold mb-4">Pricing & Stock</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Price (GH) *</label>
-                  <input type="number" name="price" value={formData.price} onChange={handleChange} required min="0" step="0.01" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Cost (GH) *</label>
-                  <input type="number" name="cost" value={formData.cost} onChange={handleChange} required min="0" step="0.01" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Quantity *</label>
-                  <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} required min="0" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Min Stock *</label>
-                  <input type="number" name="minstock" value={formData.minstock} onChange={handleChange} required min="0" className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border rounded-lg" />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-6 border-t">
-              <button
-                type="submit"
-                disabled={saving}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl flex items-center gap-2 disabled:opacity-50"
-              >
-                {saving ? <><Loader2 className="h-5 w-5 animate-spin" /> Saving...</> : <><Save className="h-5 w-5" /> Save Changes</>}
-              </button>
-            </div>
-          </div>
-        </form>
       </div>
-    </div>
+    </AuthGuard>
   )
 }
