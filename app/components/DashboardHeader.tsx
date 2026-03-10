@@ -50,7 +50,8 @@ export default function DashboardHeader({
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        setUserEmail(user.email)
+        // Handle case where email might be undefined
+        setUserEmail(user.email ?? null)
       }
     }
     getUser()
