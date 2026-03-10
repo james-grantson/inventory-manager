@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Sparkles, Gem, Layout, Plus } from 'lucide-react'
-import { SimpleDashboard } from './components/SimpleDashboard'
-import SophisticatedDashboard from './sophisticated-dashboard'
 import ClassicDashboard from './classic-dashboard'
+import SimpleDashboard from './simple-dashboard'
+import SophisticatedDashboard from './sophisticated-dashboard'
 
 export default function DashboardPage() {
   const [dashboardStyle, setDashboardStyle] = useState<'classic' | 'simple' | 'sophisticated'>('simple')
