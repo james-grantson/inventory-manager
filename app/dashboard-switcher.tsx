@@ -2,12 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Sparkles, Gem, Layout, Plus } from 'lucide-react'
+import { getAuthToken } from '@/lib/auth'
 import ClassicDashboard from './classic-dashboard'
 import SimpleDashboard from './simple-dashboard'
 import SophisticatedDashboard from './sophisticated-dashboard'
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [dashboardStyle, setDashboardStyle] = useState<'classic' | 'simple' | 'sophisticated'>('simple')
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,7 +46,14 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`)
+      const token = await getAuthToken()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const data = await res.json()
       setProducts(data.products || [])
     } catch (error) {
