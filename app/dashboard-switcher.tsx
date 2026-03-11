@@ -81,7 +81,7 @@ export default function DashboardPage() {
   return (
     <>
       {/* Top Bar with Add Product Button and Dashboard Switcher */}
-      <div className="fixed top-4 right-4 z-50 flex gap-2">
+      <div className="fixed top-16 right-4 z-50 flex gap-2">
         <Link
           href="/products/add"
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 transition-colors"
@@ -100,7 +100,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Current Dashboard Label (for debugging) */}
-      <div className="fixed top-4 left-4 z-50 bg-black/50 text-white px-3 py-1 rounded-lg text-sm">
+      <div className="fixed top-16 left-4 z-50 bg-black/50 text-white px-3 py-1 rounded-lg text-sm">
         Current: {buttonInfo.label}
       </div>
 

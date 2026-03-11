@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase-client';
+import { getAuthToken } from '@/lib/auth';
 import AuthGuard from '@/app/components/AuthGuard';
 import { motion } from 'framer-motion';
 import {
@@ -26,6 +27,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [role, setRole] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,16 +38,33 @@ export default function ProfilePage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
-    fetchUser();
+    fetchUserAndProfile();
   }, []);
 
-  const fetchUser = async () => {
+  const fetchUserAndProfile = async () => {
     try {
+      // Get Supabase user
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-        setEmail(user.email || '');
-        setFullName(user.user_metadata?.full_name || '');
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      setUser(user);
+      setEmail(user.email || '');
+      setFullName(user.user_metadata?.full_name || '');
+
+      // Fetch profile from backend to get role
+      const token = await getAuthToken();
+      if (token) {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setRole(data.profile?.role || 'cashier');
+        } else {
+          console.error('Failed to fetch profile');
+        }
       }
     } catch (err) {
       console.error('Error fetching user:', err);
@@ -220,6 +239,19 @@ export default function ProfilePage() {
                     className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 cursor-not-allowed"
                   />
                   <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Role
+                  </label>
+                  <input
+                    type="text"
+                    value={role || 'cashier'}
+                    disabled
+                    className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Your access level</p>
                 </div>
 
                 <button
