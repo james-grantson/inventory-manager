@@ -80,8 +80,8 @@ export default function DashboardPage() {
 
   return (
     <>
-      {/* Floating action buttons – now square and icon‑only */}
-      <div className="fixed top-20 right-4 z-50 flex gap-2">
+      {/* Floating action buttons – square, icon‑only, moved further down */}
+      <div className="fixed top-24 right-4 z-50 flex gap-2">
         <Link
           href="/products/add"
           className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg shadow-lg flex items-center justify-center transition-colors"
@@ -100,7 +100,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Current Dashboard Label (for debugging) */}
-      <div className="fixed top-20 left-4 z-50 bg-black/50 text-white px-3 py-1 rounded-lg text-sm">
+      <div className="fixed top-24 left-4 z-50 bg-black/50 text-white px-3 py-1 rounded-lg text-sm">
         Current: {buttonInfo.label}
       </div>
 
