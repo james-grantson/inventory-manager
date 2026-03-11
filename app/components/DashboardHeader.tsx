@@ -73,15 +73,15 @@ export default function DashboardHeader({
     <header className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Left side - Title and icon */}
-          <div className="flex items-center">
+          {/* Left side - Title, icon, and dashboard switcher */}
+          <div className="flex items-center gap-4">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 dark:from-purple-600 dark:to-pink-600 rounded-xl blur-lg opacity-50"></div>
               <div className="relative bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-700 dark:to-pink-700 p-3 rounded-xl">
                 {icon}
               </div>
             </div>
-            <div className="ml-4">
+            <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>   
               {subtitle && (
                 <p className="text-gray-600 dark:text-gray-300 text-sm flex items-center gap-2">
@@ -102,14 +102,12 @@ export default function DashboardHeader({
                 </p>
               )}
             </div>
-          </div>
 
-          {/* Center - Dashboard Dropdown (remains here) */}
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <div className="relative" onClick={(e) => e.stopPropagation()}>
+            {/* Dashboard Switcher Button (moved to left) */}
+            <div className="relative ml-4" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all duration-300 hover:scale-105"
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 transition-all duration-300 hover:scale-105"
               >
                 <Layout className="h-4 w-4" />
                 <span className="font-medium">Dashboard</span>
@@ -168,7 +166,7 @@ export default function DashboardHeader({
 
           {/* Right side - Controls */}
           <div className="flex items-center space-x-3">
-            {/* Add Product Button */}
+            {/* Add Product Button (only for non-cashiers) */}
             {profile?.role !== 'cashier' && (
               <Link
                 href="/products/add"
@@ -178,9 +176,6 @@ export default function DashboardHeader({
                 <Plus className="h-5 w-5" />
               </Link>
             )}
-
-            {/* Dashboard Switcher Button (replaces the old dropdown? We'll keep it separate for now) */}
-            {/* Actually we already have the dropdown in the center. The floating switcher button is redundant, so we omit it. */}
 
             {/* POS Link */}
             <Link 

@@ -39,10 +39,6 @@ export default function DashboardPage() {
     }
   }
 
-  // Removed cycleDashboard and getButtonInfo – they are no longer needed because the dropdown in header handles switching.
-  // We still need to listen for style changes from the header's dropdown.
-  // The header's dropdown updates localStorage and reloads the page, so we don't need to handle it here.
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center">
@@ -53,7 +49,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      {/* Current Dashboard Label (for debugging) */}
+      {/* Debug label – optional */}
       <div className="fixed top-4 left-4 z-50 bg-black/50 text-white px-3 py-1 rounded-lg text-sm">
         Current: {dashboardStyle === 'classic' ? 'Classic' : dashboardStyle === 'simple' ? 'Simple' : 'Sophisticated'}
       </div>
