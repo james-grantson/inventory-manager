@@ -104,20 +104,8 @@ export default function DashboardHeader({
             </div>
           </div>
 
-          {/* Center - Action Buttons */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-3">
-            {/* Add Product - only for admin/manager */}
-            {profile?.role !== 'cashier' && (
-              <Link
-                href="/products/add"
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all duration-300 hover:scale-105"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="font-medium">Add Product</span>
-              </Link>
-            )}
-
-            {/* Dashboard Dropdown */}
+          {/* Center - Dashboard Dropdown (remains here) */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
             <div className="relative" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -180,6 +168,20 @@ export default function DashboardHeader({
 
           {/* Right side - Controls */}
           <div className="flex items-center space-x-3">
+            {/* Add Product Button */}
+            {profile?.role !== 'cashier' && (
+              <Link
+                href="/products/add"
+                className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg flex items-center justify-center transition-colors"
+                title="Add Product"
+              >
+                <Plus className="h-5 w-5" />
+              </Link>
+            )}
+
+            {/* Dashboard Switcher Button (replaces the old dropdown? We'll keep it separate for now) */}
+            {/* Actually we already have the dropdown in the center. The floating switcher button is redundant, so we omit it. */}
+
             {/* POS Link */}
             <Link 
               href="/pos" 
