@@ -70,25 +70,25 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
   }, [darkMode])
 
   const fetchData = async () => {
-    try {
-      const token = await getAuthToken()
-      if (!token) {
-        router.push('/login')
-        return
-      }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
-      setProducts(data.products || [])
-      setLastUpdated(new Date())
-    } catch (error) {
-      console.error('Error:', error)
-    } finally {
-      setLoading(false)
+  try {
+    const token = await getAuthToken()
+    if (!token) {
+      router.push('/login')
+      return
     }
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    setProducts(data.products || [])
+    setLastUpdated(new Date())
+  } catch (error) {
+    console.error('Error:', error)
+  } finally {
+    setLoading(false)
   }
-
+}
+ 
   const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A'

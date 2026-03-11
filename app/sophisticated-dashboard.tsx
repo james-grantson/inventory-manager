@@ -117,31 +117,25 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
   }, [darkMode])
 
   const fetchData = async () => {
-    try {
-      setError('')
-      const token = await getAuthToken()
-      if (!token) {
-        router.push('/login')
-        return
-      }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (!res.ok) throw new Error('Failed to fetch')
-      const data = await res.json()
-      const productList = data.products || []
-      setProducts(productList)
-      setFilteredProducts(productList)
-      setLastUpdated(new Date())
-      calculateStats(productList)
-    } catch (error) {
-      console.error('Error:', error)
-      setError('Failed to load products')
-    } finally {
-      setLoading(false)
+  try {
+    const token = await getAuthToken()
+    if (!token) {
+      router.push('/login')
+      return
     }
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    setProducts(data.products || [])
+    setLastUpdated(new Date())
+  } catch (error) {
+    console.error('Error:', error)
+  } finally {
+    setLoading(false)
   }
-
+}
+  
   const calculateStats = (productList: any[]) => {
     const totalValue = productList.reduce((sum: number, p: any) => sum + (p.price * p.quantity), 0)
     const totalProfit = productList.reduce((sum: number, p: any) => sum + ((p.price - p.cost) * p.quantity), 0)
