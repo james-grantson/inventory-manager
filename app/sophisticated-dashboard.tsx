@@ -36,17 +36,18 @@ import {
   Layout
 } from 'lucide-react'
 import DashboardHeader from './components/DashboardHeader'
-import { getAuthToken } from '@/lib/auth'
+import { useApi } from '@/lib/api'
 
 interface SophisticatedDashboardProps {
   products?: any[]
+  onRefresh?: () => void
 }
 
-export default function SophisticatedDashboard({ products: externalProducts }: SophisticatedDashboardProps) {
+export default function SophisticatedDashboard({ products: externalProducts, onRefresh }: SophisticatedDashboardProps) {
   const router = useRouter()
+  const { apiFetch } = useApi()
   const [products, setProducts] = useState<any[]>(externalProducts || [])
   const [filteredProducts, setFilteredProducts] = useState<any[]>(externalProducts || [])
-  const [loading, setLoading] = useState(!externalProducts)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [darkMode, setDarkMode] = useState(false)
@@ -65,44 +66,6 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
   })
 
   useEffect(() => {
-    if (externalProducts && externalProducts.length > 0) {
-      setProducts(externalProducts)
-      setFilteredProducts(externalProducts)
-      setLoading(false)
-      calculateStats(externalProducts)
-    } else {
-      fetchData()
-    }
-  }, [externalProducts])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      filterProducts()
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery, products, categoryFilter, stockFilter])
-
-  useEffect(() => {
-    if (!externalProducts) {
-      const interval = setInterval(fetchData, 120000)
-      return () => clearInterval(interval)
-    }
-  }, [externalProducts])
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'r') {
-        e.preventDefault()
-        if (!externalProducts) {
-          fetchData()
-        }
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [externalProducts])
-
-  useEffect(() => {
     const savedMode = localStorage.getItem('sophisticatedDarkMode')
     if (savedMode) setDarkMode(savedMode === 'true')
   }, [])
@@ -116,26 +79,22 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     }
   }, [darkMode])
 
-  const fetchData = async () => {
-  try {
-    const token = await getAuthToken()
-    if (!token) {
-      router.push('/login')
-      return
+  useEffect(() => {
+    if (externalProducts) {
+      setProducts(externalProducts)
+      setFilteredProducts(externalProducts)
+      setLastUpdated(new Date())
+      calculateStats(externalProducts)
     }
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    const data = await res.json()
-    setProducts(data.products || [])
-    setLastUpdated(new Date())
-  } catch (error) {
-    console.error('Error:', error)
-  } finally {
-    setLoading(false)
-  }
-}
-  
+  }, [externalProducts])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      filterProducts()
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery, products, categoryFilter, stockFilter])
+
   const calculateStats = (productList: any[]) => {
     const totalValue = productList.reduce((sum: number, p: any) => sum + (p.price * p.quantity), 0)
     const totalProfit = productList.reduce((sum: number, p: any) => sum + ((p.price - p.cost) * p.quantity), 0)
@@ -237,17 +196,15 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
     return Array.from(new Set(products.map(p => p.category?.name || 'Uncategorized')))
   }, [products])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
-        <div className="relative">
-          <div className="w-24 h-24 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-full animate-pulse"></div>
-          </div>
-        </div>
-      </div>
-    )
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure?')) {
+      try {
+        await apiFetch(`/api/products/${id}`, { method: 'DELETE' })
+        if (onRefresh) onRefresh()
+      } catch (error) {
+        console.error('Delete error:', error)
+      }
+    }
   }
 
   if (error) {
@@ -259,7 +216,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
           </div>
           <p className="text-gray-900 dark:text-white text-lg mb-6">{error}</p>
           <button
-            onClick={fetchData}
+            onClick={onRefresh}
             className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg"
           >
             Try Again
@@ -279,7 +236,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
         lastUpdated={lastUpdated}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
-        onRefresh={fetchData}
+        onRefresh={onRefresh}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20">
@@ -508,24 +465,7 @@ export default function SophisticatedDashboard({ products: externalProducts }: S
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={async () => {
-                          if (confirm('Are you sure?')) {
-                            try {
-                              const token = await getAuthToken()
-                              if (!token) {
-                                router.push('/login')
-                                return
-                              }
-                              await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${product.id}`, {
-                                method: 'DELETE',
-                                headers: { Authorization: `Bearer ${token}` }
-                              })
-                              fetchData()
-                            } catch (error) {
-                              console.error('Error:', error)
-                            }
-                          }
-                        }}
+                        onClick={() => handleDelete(product.id)}
                         className="p-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-all text-gray-600 dark:text-gray-300"
                         title="Delete"
                       >

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase-client';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff, Store } from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -42,14 +42,18 @@ export default function SignUpPage() {
           data: {
             full_name: fullName,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (error) throw error;
 
-      if (data.user) {
-        alert('Check your email for confirmation link!');
+      // If user is automatically signed in (email confirmation disabled)
+      if (data.session) {
+        // Redirect to setup page to create or join a store
+        router.push('/setup');
+      } else {
+        // Email confirmation required
+        alert('Please check your email for a confirmation link.');
         router.push('/login');
       }
     } catch (err: any) {
@@ -67,6 +71,11 @@ export default function SignUpPage() {
         className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700"
       >
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+              <Store className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+            </div>
+          </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create Account</h1>
           <p className="text-gray-500 dark:text-gray-400">Sign up to get started</p>
         </div>

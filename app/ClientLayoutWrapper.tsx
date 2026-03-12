@@ -1,6 +1,7 @@
 'use client';
 
 import { UserProvider } from '@/contexts/UserContext';
+import { OrganizationProvider } from '@/contexts/OrganizationContext';
 import BackendStatus from '@/app/components/BackendStatus';
 
 export default function ClientLayoutWrapper({
@@ -10,8 +11,10 @@ export default function ClientLayoutWrapper({
 }) {
   return (
     <UserProvider>
-      {children}
-      <BackendStatus />
+      <OrganizationProvider>
+        {children}
+        <BackendStatus />
+      </OrganizationProvider>
     </UserProvider>
   );
 }

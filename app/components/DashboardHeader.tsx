@@ -17,10 +17,12 @@ import {
   Tags,
   Mail,
   LogOut,
-  User
+  User,
+  Store
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import { useUser } from '@/contexts/UserContext'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 interface DashboardHeaderProps {
   title: string
@@ -45,8 +47,10 @@ export default function DashboardHeader({
 }: DashboardHeaderProps) {
   const router = useRouter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [orgDropdownOpen, setOrgDropdownOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const { profile } = useUser()
+  const { organizations, currentOrganization, setCurrentOrganization } = useOrganization()
 
   useEffect(() => {
     const getUser = async () => {
@@ -237,6 +241,62 @@ export default function DashboardHeader({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </Link>
+            )}
+
+            {/* Organization Switcher */}
+            {organizations.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={() => setOrgDropdownOpen(!orgDropdownOpen)}
+                  className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700 flex items-center gap-1"
+                  title="Switch Store"
+                >
+                  <Store className="h-5 w-5" />
+                  {currentOrganization && <span className="text-sm hidden md:inline">{currentOrganization.name}</span>}
+                </button>
+                <AnimatePresence>
+                  {orgDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50"
+                    >
+                      {organizations.map(org => (
+                        <button
+                          key={org.id}
+                          onClick={() => {
+                            setCurrentOrganization(org);
+                            setOrgDropdownOpen(false);
+                            // Optionally refresh data – the context will handle reload via useEffect
+                          }}
+                          className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${
+                            currentOrganization?.id === org.id ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600' : ''
+                          }`}
+                        >
+                          <Store className={`h-4 w-4 ${currentOrganization?.id === org.id ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
+                          <span>{org.name}</span>
+                          {currentOrganization?.id === org.id && (
+                            <span className="ml-auto text-xs bg-white/20 px-2 py-1 rounded text-white">Current</span>
+                          )}
+                        </button>
+                      ))}
+                      <div className="border-t border-gray-200 dark:border-gray-700">
+                        <Link
+                          href="/admin/organizations"
+                          className="w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+                          onClick={() => setOrgDropdownOpen(false)}
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          <span>Manage Stores</span>
+                        </Link>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
 
             {/* User email display with profile link */}

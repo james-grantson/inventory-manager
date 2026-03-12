@@ -4,28 +4,25 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import DashboardHeader from './components/DashboardHeader'
-import { getAuthToken } from '@/lib/auth'
+import { useApi } from '@/lib/api'
 import { Package, DollarSign, AlertTriangle, TrendingUp, TrendingDown, Minus, Layout } from 'lucide-react'
 
 interface SimpleDashboardProps {
   products?: any[]
+  onRefresh?: () => void
 }
 
-export default function SimpleDashboard({ products: externalProducts }: SimpleDashboardProps) {
+export default function SimpleDashboard({ products: externalProducts, onRefresh }: SimpleDashboardProps) {
   const router = useRouter()
+  const { apiFetch } = useApi()
   const [products, setProducts] = useState<any[]>(externalProducts || [])
-  const [loading, setLoading] = useState(!externalProducts)
   const [darkMode, setDarkMode] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   useEffect(() => {
-    if (!externalProducts) {
-      fetchData()
-    }
-
     const savedMode = localStorage.getItem('simpleDarkMode')
     if (savedMode) setDarkMode(savedMode === 'true')
-  }, [externalProducts])
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('simpleDarkMode', darkMode.toString())
@@ -36,25 +33,12 @@ export default function SimpleDashboard({ products: externalProducts }: SimpleDa
     }
   }, [darkMode])
 
-  const fetchData = async () => {
-    try {
-      const token = await getAuthToken()
-      if (!token) {
-        router.push('/login')
-        return
-      }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
-      setProducts(data.products || [])
+  useEffect(() => {
+    if (externalProducts) {
+      setProducts(externalProducts)
       setLastUpdated(new Date())
-    } catch (error) {
-      console.error('Error:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [externalProducts])
 
   const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
 
@@ -70,14 +54,6 @@ export default function SimpleDashboard({ products: externalProducts }: SimpleDa
     return <TrendingUp className="h-4 w-4 text-green-500" />
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gradient-light dark:bg-gray-900 transition-colors duration-300">
       <DashboardHeader 
@@ -88,7 +64,7 @@ export default function SimpleDashboard({ products: externalProducts }: SimpleDa
         lastUpdated={lastUpdated}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
-        onRefresh={fetchData}
+        onRefresh={onRefresh}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

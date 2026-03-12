@@ -1,6 +1,5 @@
-﻿datasource db {
+datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -23,5 +22,49 @@ model Product {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  saleItems   SaleItem[]
+
   @@map("products")
+}
+
+model Profile {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  role      String   @default("cashier")
+  fullName  String?  @map("full_name")
+  email     String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  sales     Sale[]
+
+  @@map("profiles")
+}
+
+model Sale {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  totalAmount   Float       @map("total_amount") @db.Decimal(10,2)
+  paymentMethod String      @map("payment_method")
+  status        String      @default("completed")
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  profile       Profile     @relation(fields: [userId], references: [userId])
+  saleItems     SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  saleId      String   @map("sale_id") @db.Uuid
+  productId   String   @map("product_id") @db.Uuid
+  quantity    Int
+  priceAtSale Float    @map("price_at_sale") @db.Decimal(10,2)
+  subtotal    Float    @db.Decimal(10,2)
+
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  product     Product  @relation(fields: [productId], references: [id])
+
+  @@map("sale_items")
 }

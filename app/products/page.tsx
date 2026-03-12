@@ -15,20 +15,30 @@ import {
   Table as TableIcon
 } from 'lucide-react'
 import AuthGuard from '@/app/components/AuthGuard'
-import { getAuthToken } from '@/lib/auth'
+import { useApi } from '@/lib/api'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 export default function ProductsPage() {
   const router = useRouter()
+  const { apiFetch } = useApi()
+  const { currentOrganization } = useOrganization()
   const [products, setProducts] = useState<any[]>([])
   const [filteredProducts, setFilteredProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'table' | 'gallery'>('table')
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
-    fetchProducts()
-  }, [])
+    if (currentOrganization) {
+      fetchProducts()
+    } else {
+      // No organization selected – maybe show a message
+      setLoading(false)
+      setError('No store selected. Please select or create a store.')
+    }
+  }, [currentOrganization])
 
   useEffect(() => {
     filterProducts()
@@ -37,20 +47,15 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const token = await getAuthToken()
-      if (!token) {
-        router.push('/login')
-        return
-      }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      setError(null)
+      const res = await apiFetch('/api/products')
       const data = await res.json()
       console.log('Fetched products:', data.products)
       setProducts(data.products || [])
       setFilteredProducts(data.products || [])
-    } catch (error) {
-      console.error('Error:', error)
+    } catch (err: any) {
+      console.error('Error fetching products:', err)
+      setError(err.message || 'Failed to load products')
     } finally {
       setLoading(false)
     }
@@ -75,18 +80,11 @@ export default function ProductsPage() {
     if (!confirm('Are you sure you want to delete this product?')) return
 
     try {
-      const token = await getAuthToken()
-      if (!token) {
-        router.push('/login')
-        return
-      }
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      fetchProducts()
-    } catch (error) {
-      console.error('Error:', error)
+      await apiFetch(`/api/products/${id}`, { method: 'DELETE' })
+      await fetchProducts()
+    } catch (err: any) {
+      console.error('Error deleting product:', err)
+      alert(err.message || 'Failed to delete product')
     }
   }
 
@@ -115,11 +113,34 @@ export default function ProductsPage() {
     return { label: 'In Stock', class: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' }
   }
 
+  // Show error if no organization
+  if (error && !currentOrganization) {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center max-w-md">
+            <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Store Selected</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">{error}</p>
+            <Link
+              href="/admin/organizations"
+              className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg"
+            >
+              Manage Stores
+            </Link>
+          </div>
+        </div>
+      </AuthGuard>
+    )
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
-      </div>
+      <AuthGuard>
+        <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
+        </div>
+      </AuthGuard>
     )
   }
 
@@ -186,6 +207,13 @@ export default function ProductsPage() {
               />
             </div>
           </div>
+
+          {/* Error message (if any) */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400">
+              {error}
+            </div>
+          )}
 
           {/* Products Display */}
           {filteredProducts.length === 0 ? (

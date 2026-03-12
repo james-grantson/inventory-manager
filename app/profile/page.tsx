@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase-client';
-import { getAuthToken } from '@/lib/auth';
 import AuthGuard from '@/app/components/AuthGuard';
+import { useApi } from '@/lib/api';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -17,11 +18,15 @@ import {
   Eye,
   EyeOff,
   LogOut,
-  CheckCircle
+  CheckCircle,
+  Store,
+  ChevronRight
 } from 'lucide-react';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { apiFetch } = useApi();
+  const { organizations, currentOrganization, setCurrentOrganization } = useOrganization();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -53,18 +58,13 @@ export default function ProfilePage() {
       setEmail(user.email || '');
       setFullName(user.user_metadata?.full_name || '');
 
-      // Fetch profile from backend to get role
-      const token = await getAuthToken();
-      if (token) {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setRole(data.profile?.role || 'cashier');
-        } else {
-          console.error('Failed to fetch profile');
-        }
+      // Fetch profile from backend to get role (and organizations are already in context)
+      const res = await apiFetch('/api/users/me');
+      if (res.ok) {
+        const data = await res.json();
+        setRole(data.profile?.role || 'cashier');
+      } else {
+        console.error('Failed to fetch profile');
       }
     } catch (err) {
       console.error('Error fetching user:', err);
@@ -147,6 +147,12 @@ export default function ProfilePage() {
     router.push('/login');
   };
 
+  const handleSwitchStore = (org: any) => {
+    setCurrentOrganization(org);
+    setSuccess(`Switched to ${org.name}`);
+    setTimeout(() => setSuccess(''), 2000);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
@@ -191,6 +197,33 @@ export default function ProfilePage() {
 
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="space-y-6">
+            {/* Current Store Card */}
+            {currentOrganization && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl shadow-xl p-6 text-white"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-white/20 rounded-xl">
+                      <Store className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-sm opacity-80">Current Store</p>
+                      <h2 className="text-xl font-bold">{currentOrganization.name}</h2>
+                    </div>
+                  </div>
+                  <Link
+                    href="/admin/organizations"
+                    className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm transition-colors"
+                  >
+                    Manage Stores
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+
             {/* Profile Information */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -263,6 +296,71 @@ export default function ProfilePage() {
                 </button>
               </form>
             </motion.div>
+
+            {/* Organizations List */}
+            {organizations.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-200 dark:border-gray-700"
+              >
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Store className="h-5 w-5 text-purple-600" />
+                  Your Stores
+                </h2>
+
+                <div className="space-y-2">
+                  {organizations.map(org => (
+                    <button
+                      key={org.id}
+                      onClick={() => handleSwitchStore(org)}
+                      className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors ${
+                        currentOrganization?.id === org.id
+                          ? 'bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800'
+                          : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 border border-transparent'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${
+                          currentOrganization?.id === org.id
+                            ? 'bg-purple-200 dark:bg-purple-800'
+                            : 'bg-gray-200 dark:bg-gray-600'
+                        }`}>
+                          <Store className={`h-4 w-4 ${
+                            currentOrganization?.id === org.id
+                              ? 'text-purple-700 dark:text-purple-300'
+                              : 'text-gray-700 dark:text-gray-300'
+                          }`} />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium text-gray-900 dark:text-white">{org.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Role: {org.role || 'member'}
+                          </p>
+                        </div>
+                      </div>
+                      {currentOrganization?.id === org.id ? (
+                        <span className="text-xs px-2 py-1 bg-purple-200 dark:bg-purple-800 text-purple-700 dark:text-purple-300 rounded-full">
+                          Current
+                        </span>
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Link
+                    href="/admin/organizations"
+                    className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                  >
+                    Manage Stores <ChevronRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </motion.div>
+            )}
 
             {/* Change Password */}
             <motion.div

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import DashboardHeader from './components/DashboardHeader'
-import { getAuthToken } from '@/lib/auth'
+import { useApi } from '@/lib/api'
 import { 
   Package, 
   DollarSign, 
@@ -27,22 +27,19 @@ import {
 
 interface ClassicDashboardProps {
   products?: any[]
+  onRefresh?: () => void
 }
 
-export default function ClassicDashboard({ products: externalProducts }: ClassicDashboardProps) {
+export default function ClassicDashboard({ products: externalProducts, onRefresh }: ClassicDashboardProps) {
   const router = useRouter()
+  const { apiFetch } = useApi()
   const [products, setProducts] = useState<any[]>(externalProducts || [])
-  const [loading, setLoading] = useState(!externalProducts)
   const [greeting, setGreeting] = useState('')
   const [currentTime, setCurrentTime] = useState('')
   const [darkMode, setDarkMode] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   useEffect(() => {
-    if (!externalProducts) {
-      fetchData()
-    }
-
     const hour = new Date().getHours()
     if (hour < 12) setGreeting('Good Morning')
     else if (hour < 18) setGreeting('Good Afternoon')
@@ -58,7 +55,7 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
     if (savedMode) setDarkMode(savedMode === 'true')
     
     return () => clearInterval(timer)
-  }, [externalProducts])
+  }, [])
 
   useEffect(() => {
     localStorage.setItem('classicDarkMode', darkMode.toString())
@@ -69,26 +66,13 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
     }
   }, [darkMode])
 
-  const fetchData = async () => {
-  try {
-    const token = await getAuthToken()
-    if (!token) {
-      router.push('/login')
-      return
+  useEffect(() => {
+    if (externalProducts) {
+      setProducts(externalProducts)
+      setLastUpdated(new Date())
     }
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    const data = await res.json()
-    setProducts(data.products || [])
-    setLastUpdated(new Date())
-  } catch (error) {
-    console.error('Error:', error)
-  } finally {
-    setLoading(false)
-  }
-}
- 
+  }, [externalProducts])
+
   const formatCurrency = (amount: number) => `GH₵${amount.toFixed(2)}`
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A'
@@ -124,12 +108,15 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
     return <TrendingUp className="h-3 w-3" />
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-      </div>
-    )
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure?')) {
+      try {
+        await apiFetch(`/api/products/${id}`, { method: 'DELETE' })
+        if (onRefresh) onRefresh()
+      } catch (error) {
+        console.error('Delete error:', error)
+      }
+    }
   }
 
   return (
@@ -142,7 +129,7 @@ export default function ClassicDashboard({ products: externalProducts }: Classic
         lastUpdated={lastUpdated}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
-        onRefresh={fetchData}
+        onRefresh={onRefresh}
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20">

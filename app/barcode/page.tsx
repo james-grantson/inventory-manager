@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -19,11 +19,14 @@ import {
   Layers,
   Camera,
   ScanLine,
-  FileUp
+  FileUp,
+  Store
 } from 'lucide-react'
 import JsBarcode from 'jsbarcode'
 import RealBarcodeScanner from '@/app/components/RealBarcodeScanner'
 import AuthGuard from '@/app/components/AuthGuard'
+import { useApi } from '@/lib/api'
+import { useOrganization } from '@/contexts/OrganizationContext'
 
 interface BarcodeItem {
   id: string
@@ -32,7 +35,21 @@ interface BarcodeItem {
   quantity?: number
 }
 
+interface Product {
+  id: string
+  name: string
+  sku: string | null
+  quantity: number
+  price?: number
+}
+
 export default function EnhancedBarcodePage() {
+  const { apiFetch } = useApi()
+  const { currentOrganization } = useOrganization()
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
   const [barcodeValue, setBarcodeValue] = useState('')
   const [barcodeItems, setBarcodeItems] = useState<BarcodeItem[]>([])
   const [copied, setCopied] = useState<string | null>(null)
@@ -58,14 +75,29 @@ export default function EnhancedBarcodePage() {
     'CODABAR'
   ]
 
-  const sampleProducts = [
-    { name: 'Engine Oil', sku: 'OIL-5W30-001', quantity: 150 },
-    { name: 'Brake Pads', sku: 'BP-TOYOTA-2023', quantity: 42 },
-    { name: 'Cement 50kg', sku: 'CEMENT-50KG', quantity: 280 },
-    { name: 'Light Bulb', sku: 'SKU-1772490975', quantity: 30 },
-    { name: 'Goil Petrol', sku: 'SKU-1772466738', quantity: 90 },
-    { name: 'Air Filter', sku: 'AF-TOYOTA-2024', quantity: 25 }
-  ]
+  // Fetch products when organization changes
+  useEffect(() => {
+    if (currentOrganization) {
+      fetchProducts()
+    } else {
+      setLoading(false)
+    }
+  }, [currentOrganization])
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true)
+      setError('')
+      const res = await apiFetch('/api/products')
+      const data = await res.json()
+      setProducts(data.products || [])
+    } catch (err: any) {
+      console.error('Error fetching products:', err)
+      setError(err.message || 'Failed to load products')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const generateBarcode = (value: string, id: string) => {
     const element = barcodeRefs.current[id]
@@ -110,10 +142,11 @@ export default function EnhancedBarcodePage() {
     setBarcodeItems(barcodeItems.filter(item => item.id !== id))
   }
 
-  const addFromProducts = (product: typeof sampleProducts[0]) => {
+  const addFromProducts = (product: Product) => {
+    const sku = product.sku || product.id // fallback to id if no sku
     const newItem: BarcodeItem = {
       id: Date.now().toString(),
-      value: product.sku,
+      value: sku,
       name: product.name,
       quantity: product.quantity
     }
@@ -125,9 +158,9 @@ export default function EnhancedBarcodePage() {
   }
 
   const addAllProducts = () => {
-    const newItems = sampleProducts.map((product, index) => ({
+    const newItems = products.map((product, index) => ({
       id: (Date.now() + index).toString(),
-      value: product.sku,
+      value: product.sku || product.id,
       name: product.name,
       quantity: product.quantity
     }))
@@ -244,6 +277,37 @@ export default function EnhancedBarcodePage() {
     barcodeRefs.current[id] = el
   }
 
+  // Handle loading and no organization states
+  if (!currentOrganization) {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center max-w-md">
+            <Store className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Store Selected</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">Please select or create a store to generate barcodes.</p>
+            <Link
+              href="/admin/organizations"
+              className="inline-block bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-lg"
+            >
+              Manage Stores
+            </Link>
+          </div>
+        </div>
+      </AuthGuard>
+    )
+  }
+
+  if (loading) {
+    return (
+      <AuthGuard>
+        <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
+        </div>
+      </AuthGuard>
+    )
+  }
+
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gradient-light dark:bg-gray-900 transition-colors duration-300">
@@ -310,6 +374,12 @@ export default function EnhancedBarcodePage() {
         </header>
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
+              {error}
+            </div>
+          )}
+
           {viewMode === 'single' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Input Section */}
@@ -432,28 +502,30 @@ export default function EnhancedBarcodePage() {
                   </div>
 
                   {/* Quick Add Products */}
-                  <div className="mt-6">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Quick Add Products</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={addAllProducts}
-                        className="col-span-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-colors text-purple-700 dark:text-purple-400 font-medium text-sm flex items-center justify-center gap-2"
-                      >
-                        <Package className="h-4 w-4" />
-                        Add All Products
-                      </button>
-                      {sampleProducts.map((product) => (
+                  {products.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Quick Add Products</h3>
+                      <div className="grid grid-cols-2 gap-2">
                         <button
-                          key={product.sku}
-                          onClick={() => addFromProducts(product)}
-                          className="p-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg text-left transition-colors"
+                          onClick={addAllProducts}
+                          className="col-span-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-lg transition-colors text-purple-700 dark:text-purple-400 font-medium text-sm flex items-center justify-center gap-2"
                         >
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{product.name}</p>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{product.sku}</p>
+                          <Package className="h-4 w-4" />
+                          Add All Products ({products.length})
                         </button>
-                      ))}
+                        {products.slice(0, 6).map((product) => (
+                          <button
+                            key={product.id}
+                            onClick={() => addFromProducts(product)}
+                            className="p-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg text-left transition-colors"
+                          >
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{product.name}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{product.sku || product.id}</p>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </motion.div>
 
@@ -577,10 +649,8 @@ export default function EnhancedBarcodePage() {
                     <textarea
                       value={bulkText}
                       onChange={(e) => setBulkText(e.target.value)}
-                      placeholder="e.g.:
-OIL-5W30-001,Engine Oil,150
-BP-TOYOTA-2023,Brake Pads,42
-CEMENT-50KG,Cement 50kg,280"
+                      placeholder={`e.g.:
+${products.slice(0,3).map(p => `${p.sku || p.id},${p.name},${p.quantity}`).join('\n')}`}
                       rows={8}
                       className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 text-gray-900 dark:text-white font-mono text-sm"
                     />
@@ -596,10 +666,10 @@ CEMENT-50KG,Cement 50kg,280"
                       Generate Barcodes
                     </button>
                     <button
-                      onClick={() => setBulkText(sampleProducts.map(p => `${p.sku},${p.name},${p.quantity}`).join('\n'))}
+                      onClick={() => setBulkText(products.map(p => `${p.sku || p.id},${p.name},${p.quantity}`).join('\n'))}
                       className="px-4 py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
                     >
-                      Load Samples
+                      Load All Products
                     </button>
                   </div>
 
@@ -607,7 +677,7 @@ CEMENT-50KG,Cement 50kg,280"
                     <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">📋 CSV Format</h4>
                     <p className="text-xs text-blue-700 dark:text-blue-400 mb-2">Each line should have:</p>
                     <ul className="text-xs text-blue-700 dark:text-blue-400 list-disc list-inside space-y-1">
-                      <li><strong>value</strong> - The barcode value (required)</li>
+                      <li><strong>value</strong> - The barcode value (required, use product SKU or ID)</li>
                       <li><strong>name</strong> - Product name (optional)</li>
                       <li><strong>quantity</strong> - Quantity (optional)</li>
                     </ul>
@@ -625,7 +695,6 @@ CEMENT-50KG,Cement 50kg,280"
             >
               <RealBarcodeScanner
                 onScan={(value) => {
-                  // Add scanned value to barcode list
                   const newItem = {
                     id: Date.now().toString(),
                     value: value,
