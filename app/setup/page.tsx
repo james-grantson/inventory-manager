@@ -10,7 +10,7 @@ import { Store, Plus, LogIn, ArrowRight, Loader2, CheckCircle, AlertCircle } fro
 
 export default function SetupPage() {
   const router = useRouter();
-  const { user, profile } = useUser();
+  const { profile, loading: profileLoading } = useUser();
   const { apiFetch } = useApi();
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -19,14 +19,15 @@ export default function SetupPage() {
   const [success, setSuccess] = useState('');
   const [hasOrganizations, setHasOrganizations] = useState(false);
 
-  // Check if user already has organizations
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
+    if (!profileLoading) {
+      if (!profile) {
+        router.push('/login');
+        return;
+      }
+      checkOrganizations();
     }
-    checkOrganizations();
-  }, [user]);
+  }, [profile, profileLoading]);
 
   const checkOrganizations = async () => {
     try {
@@ -34,7 +35,6 @@ export default function SetupPage() {
       const orgs = await res.json();
       if (orgs.length > 0) {
         setHasOrganizations(true);
-        // Redirect to dashboard after a short delay
         setTimeout(() => router.push('/'), 2000);
       }
     } catch (err) {
@@ -73,7 +73,7 @@ export default function SetupPage() {
     }
   };
 
-  if (loading) {
+  if (profileLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-light dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
