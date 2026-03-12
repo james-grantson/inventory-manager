@@ -29,25 +29,17 @@ interface Member {
   joinedAt: string;
 }
 
-interface User {
-  userId: string;
-  fullName: string;
-  email: string;
-  role: string;
-}
-
 export default function OrganizationMembersPage() {
   const router = useRouter();
   const params = useParams();
   const { apiFetch } = useApi();
   const { organizations } = useOrganization();
   const [members, setMembers] = useState<Member[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState('');
+  const [email, setEmail] = useState('');
   const [selectedRole, setSelectedRole] = useState('member');
   const [submitting, setSubmitting] = useState(false);
 
@@ -55,43 +47,36 @@ export default function OrganizationMembersPage() {
   const organization = organizations.find(o => o.id === orgId);
 
   useEffect(() => {
-    fetchData();
+    fetchMembers();
   }, [orgId]);
 
-  const fetchData = async () => {
+  const fetchMembers = async () => {
     try {
       setLoading(true);
       setError('');
-      
-      // Fetch members
-      const membersRes = await apiFetch(`/api/organizations/${orgId}/members`);
-      const membersData = await membersRes.json();
-      setMembers(membersData);
-
-      // Fetch all users (admin only) for adding members
-      const usersRes = await apiFetch('/api/users');
-      const usersData = await usersRes.json();
-      setAllUsers(usersData.users || []);
+      const res = await apiFetch(`/api/organizations/${orgId}/members`);
+      const data = await res.json();
+      setMembers(data);
     } catch (err: any) {
-      console.error('Error fetching data:', err);
-      setError(err.message || 'Failed to load data');
+      console.error('Error fetching members:', err);
+      setError(err.message || 'Failed to load members');
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddMember = async () => {
-    if (!selectedUserId) return;
+    if (!email.trim()) return;
 
     setSubmitting(true);
     setError('');
     setSuccess('');
 
     try {
-      const res = await apiFetch(`/api/organizations/${orgId}/members`, {
+      const res = await apiFetch(`/api/organizations/${orgId}/members/by-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: selectedUserId, role: selectedRole })
+        body: JSON.stringify({ email: email.trim(), role: selectedRole })
       });
 
       if (!res.ok) {
@@ -100,10 +85,10 @@ export default function OrganizationMembersPage() {
       }
 
       setSuccess('Member added successfully!');
-      setSelectedUserId('');
+      setEmail('');
       setSelectedRole('member');
       setShowAddModal(false);
-      fetchData(); // refresh list
+      fetchMembers(); // refresh list
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.message);
@@ -127,7 +112,7 @@ export default function OrganizationMembersPage() {
       }
 
       setSuccess('Role updated successfully!');
-      fetchData();
+      fetchMembers();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.message);
@@ -149,7 +134,7 @@ export default function OrganizationMembersPage() {
       }
 
       setSuccess('Member removed successfully!');
-      fetchData();
+      fetchMembers();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.message);
@@ -260,7 +245,7 @@ export default function OrganizationMembersPage() {
                             value={member.role}
                             onChange={(e) => handleUpdateRole(member.userId, e.target.value)}
                             className="px-2 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            disabled={member.role === 'owner'} // owners cannot be changed
+                            disabled={member.role === 'owner'}
                           >
                             <option value="member">Member</option>
                             <option value="admin">Admin</option>
@@ -312,20 +297,16 @@ export default function OrganizationMembersPage() {
               <div className="px-6 py-4">
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Select User
+                    Email Address
                   </label>
-                  <select
-                    value={selectedUserId}
-                    onChange={(e) => setSelectedUserId(e.target.value)}
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="user@example.com"
                     className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="">Choose a user</option>
-                    {allUsers.map(user => (
-                      <option key={user.userId} value={user.userId}>
-                        {user.fullName || user.email} ({user.email})
-                      </option>
-                    ))}
-                  </select>
+                    required
+                  />
                 </div>
 
                 <div className="mb-4">
@@ -347,7 +328,7 @@ export default function OrganizationMembersPage() {
                 <button
                   onClick={() => {
                     setShowAddModal(false);
-                    setSelectedUserId('');
+                    setEmail('');
                     setSelectedRole('member');
                   }}
                   className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
@@ -356,7 +337,7 @@ export default function OrganizationMembersPage() {
                 </button>
                 <button
                   onClick={handleAddMember}
-                  disabled={submitting || !selectedUserId}
+                  disabled={submitting || !email.trim()}
                   className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 flex items-center gap-2"
                 >
                   {submitting ? (
