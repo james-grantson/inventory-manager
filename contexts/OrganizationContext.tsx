@@ -7,7 +7,10 @@ import { getAuthToken } from '@/lib/auth';
 interface Organization {
   id: string;
   name: string;
-  role?: string; // user's role in this org
+  role?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
 }
 
 interface OrganizationContextType {
