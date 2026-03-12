@@ -57,7 +57,6 @@ export default function SophisticatedDashboard({ products: externalProducts, onR
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [stockFilter, setStockFilter] = useState('all')
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalValue: 0,
@@ -245,39 +244,43 @@ export default function SophisticatedDashboard({ products: externalProducts, onR
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-          {[
-            { label: 'Products', value: stats.totalProducts, icon: Package, color: 'from-purple-500 to-pink-500' },
-            profile?.role !== 'cashier' && { label: 'Value', value: formatCurrency(stats.totalValue), icon: DollarSign, color: 'from-green-500 to-emerald-500' },
-            profile?.role !== 'cashier' && { label: 'Profit', value: formatCurrency(stats.totalProfit), icon: TrendingUp, color: 'from-blue-500 to-cyan-500' },
-            profile?.role !== 'cashier' && { label: 'Margin', value: `${stats.avgProfitMargin.toFixed(1)}%`, icon: PieChart, color: 'from-yellow-500 to-orange-500' },
-            { label: 'Low Stock', value: stats.lowStock, icon: AlertTriangle, color: 'from-red-500 to-pink-500' },
-            { label: 'Categories', value: stats.categories, icon: Layers, color: 'from-indigo-500 to-purple-500' }
-          ].filter(Boolean).map((stat, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -5 }}
-              className="relative group"
-            >
-              <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl`}></div>
-              <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`p-3 bg-gradient-to-r ${stat.color} rounded-xl shadow-lg`}>
-                    <stat.icon className="h-5 w-5 text-white" />
+          {(() => {
+            const statsList = [
+              { label: 'Products', value: stats.totalProducts, icon: Package, color: 'from-purple-500 to-pink-500' },
+              profile?.role !== 'cashier' && { label: 'Value', value: formatCurrency(stats.totalValue), icon: DollarSign, color: 'from-green-500 to-emerald-500' },
+              profile?.role !== 'cashier' && { label: 'Profit', value: formatCurrency(stats.totalProfit), icon: TrendingUp, color: 'from-blue-500 to-cyan-500' },
+              profile?.role !== 'cashier' && { label: 'Margin', value: `${stats.avgProfitMargin.toFixed(1)}%`, icon: PieChart, color: 'from-yellow-500 to-orange-500' },
+              { label: 'Low Stock', value: stats.lowStock, icon: AlertTriangle, color: 'from-red-500 to-pink-500' },
+              { label: 'Categories', value: stats.categories, icon: Layers, color: 'from-indigo-500 to-purple-500' }
+            ].filter(Boolean) as { label: string; value: any; icon: any; color: string; }[];
+
+            return statsList.map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -5 }}
+                className="relative group"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl`}></div>
+                <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={`p-3 bg-gradient-to-r ${stat.color} rounded-xl shadow-lg`}>
+                      <stat.icon className="h-5 w-5 text-white" />
+                    </div>
+                    <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-400">
+                      +{Math.floor(Math.random() * 20)}%
+                    </span>
                   </div>
-                  <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-400">
-                    +{Math.floor(Math.random() * 20)}%
-                  </span>
+                  <div>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{stat.label}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{stat.label}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ));
+          })()}
         </div>
 
         {/* Search and Filters */}
