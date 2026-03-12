@@ -402,68 +402,17 @@ export default function SophisticatedDashboard({ products: externalProducts, onR
                   <div className={`absolute inset-0 bg-gradient-to-r ${stockStatus.color} rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-xl`}></div>
                   
                   <div className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{product.name}</h3>
-                          <div className={`px-3 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${stockStatus.color} flex items-center gap-1`}>
-                            <StockIcon className="h-3 w-3" />
-                            {stockStatus.label}
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">{product.description}</p>
-                        
-                        <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 mb-3">
-                          <span className="text-xs text-gray-600 dark:text-gray-300">SKU: {product.sku}</span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Price</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(product.price)}</p>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cost</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(product.cost)}</p>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Stock</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{product.quantity}</p>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Min</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{product.minstock}</p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2 mb-4">
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">Supplier:</span>
-                            <span className="text-gray-900 dark:text-white">{product.supplier || '—'}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="text-gray-500 dark:text-gray-400">Location:</span>
-                            <span className="text-gray-900 dark:text-white">{product.location || '—'}</span>
-                          </div>
-                        </div>
-
-                        <div className={`p-4 rounded-xl bg-gradient-to-r ${profitGradient} bg-opacity-10 border border-gray-200 dark:border-gray-700`}>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Total Profit</span>
-                            <span className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(totalProfit)}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">Margin</span>
-                            <span className="text-sm font-semibold px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">
-                              {profitMargin.toFixed(1)}%
-                            </span>
-                          </div>
-                        </div>
+                    {/* Header with name and status */}
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{product.name}</h3>
+                      <div className={`px-3 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${stockStatus.color} flex items-center gap-1`}>
+                        <StockIcon className="h-3 w-3" />
+                        {stockStatus.label}
                       </div>
                     </div>
 
-                    {/* Image */}
-                    <div className="relative h-48 bg-gray-100 dark:bg-gray-900 mb-4 rounded-xl overflow-hidden">
+                    {/* Image - now placed right after the name */}
+                    <div className="relative h-48 bg-gray-100 dark:bg-gray-900 mb-3 rounded-xl overflow-hidden">
                       {product.image_url ? (
                         <img
                           src={product.image_url}
@@ -482,6 +431,65 @@ export default function SophisticatedDashboard({ products: externalProducts, onR
                       </div>
                     </div>
 
+                    {/* Description */}
+                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-3">{product.description}</p>
+                    
+                    {/* SKU */}
+                    <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 mb-3">
+                      <span className="text-xs text-gray-600 dark:text-gray-300">SKU: {product.sku}</span>
+                    </div>
+
+                    {/* Stats grid */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Price</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(product.price)}</p>
+                      </div>
+                      {profile?.role !== 'cashier' && (
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Cost</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatCurrency(product.cost)}</p>
+                        </div>
+                      )}
+                      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Stock</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{product.quantity}</p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Min</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{product.minstock}</p>
+                      </div>
+                    </div>
+
+                    {/* Supplier & Location */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">Supplier:</span>
+                        <span className="text-gray-900 dark:text-white">{product.supplier || '—'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">Location:</span>
+                        <span className="text-gray-900 dark:text-white">{product.location || '—'}</span>
+                      </div>
+                    </div>
+
+                    {/* Profit info – hidden for cashiers */}
+                    {profile?.role !== 'cashier' && (
+                      <div className={`p-4 rounded-xl bg-gradient-to-r ${profitGradient} bg-opacity-10 border border-gray-200 dark:border-gray-700 mb-4`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Total Profit</span>
+                          <span className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(totalProfit)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Margin</span>
+                          <span className="text-sm font-semibold px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white">
+                            {profitMargin.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action buttons */}
                     <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <button
                         onClick={() => router.push(`/products/edit/${product.id}`)}
