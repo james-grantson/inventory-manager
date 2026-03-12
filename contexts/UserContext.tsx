@@ -10,6 +10,7 @@ interface UserProfile {
   email?: string;
   role: 'admin' | 'manager' | 'cashier';
   fullName?: string;
+  isSuperAdmin?: boolean; // 👈 added for super admin check
 }
 
 interface UserContextType {
@@ -42,7 +43,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       });
       if (res.ok) {
         const data = await res.json();
-        setProfile(data.profile);
+        setProfile(data.profile); // profile now includes isSuperAdmin from backend
       } else {
         console.error('Failed to fetch profile');
       }
