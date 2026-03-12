@@ -33,10 +33,12 @@ import {
   Droplet,
   Leaf,
   Plus,
-  Layout
+  Layout,
+  Image as ImageIcon
 } from 'lucide-react'
 import DashboardHeader from './components/DashboardHeader'
 import { useApi } from '@/lib/api'
+import { useUser } from '@/contexts/UserContext'
 
 interface SophisticatedDashboardProps {
   products?: any[]
@@ -46,6 +48,7 @@ interface SophisticatedDashboardProps {
 export default function SophisticatedDashboard({ products: externalProducts, onRefresh }: SophisticatedDashboardProps) {
   const router = useRouter()
   const { apiFetch } = useApi()
+  const { profile } = useUser()
   const [products, setProducts] = useState<any[]>(externalProducts || [])
   const [filteredProducts, setFilteredProducts] = useState<any[]>(externalProducts || [])
   const [error, setError] = useState('')
@@ -244,12 +247,12 @@ export default function SophisticatedDashboard({ products: externalProducts, onR
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
           {[
             { label: 'Products', value: stats.totalProducts, icon: Package, color: 'from-purple-500 to-pink-500' },
-            { label: 'Value', value: formatCurrency(stats.totalValue), icon: DollarSign, color: 'from-green-500 to-emerald-500' },
-            { label: 'Profit', value: formatCurrency(stats.totalProfit), icon: TrendingUp, color: 'from-blue-500 to-cyan-500' },
-            { label: 'Margin', value: `${stats.avgProfitMargin.toFixed(1)}%`, icon: PieChart, color: 'from-yellow-500 to-orange-500' },
+            profile?.role !== 'cashier' && { label: 'Value', value: formatCurrency(stats.totalValue), icon: DollarSign, color: 'from-green-500 to-emerald-500' },
+            profile?.role !== 'cashier' && { label: 'Profit', value: formatCurrency(stats.totalProfit), icon: TrendingUp, color: 'from-blue-500 to-cyan-500' },
+            profile?.role !== 'cashier' && { label: 'Margin', value: `${stats.avgProfitMargin.toFixed(1)}%`, icon: PieChart, color: 'from-yellow-500 to-orange-500' },
             { label: 'Low Stock', value: stats.lowStock, icon: AlertTriangle, color: 'from-red-500 to-pink-500' },
             { label: 'Categories', value: stats.categories, icon: Layers, color: 'from-indigo-500 to-purple-500' }
-          ].map((stat, index) => (
+          ].filter(Boolean).map((stat, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
@@ -453,6 +456,26 @@ export default function SophisticatedDashboard({ products: externalProducts, onR
                             </span>
                           </div>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Image */}
+                    <div className="relative h-48 bg-gray-100 dark:bg-gray-900 mb-4 rounded-xl overflow-hidden">
+                      {product.image_url ? (
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling;
+                            if (fallback) fallback.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`w-full h-full flex items-center justify-center ${product.image_url ? 'hidden' : ''}`}>
+                        <ImageIcon className="h-16 w-16 text-gray-400" />
                       </div>
                     </div>
 

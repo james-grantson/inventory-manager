@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import DashboardHeader from './components/DashboardHeader'
 import { useApi } from '@/lib/api'
+import { useUser } from '@/contexts/UserContext'
 import { 
   Package, 
   DollarSign, 
@@ -33,6 +34,7 @@ interface ClassicDashboardProps {
 export default function ClassicDashboard({ products: externalProducts, onRefresh }: ClassicDashboardProps) {
   const router = useRouter()
   const { apiFetch } = useApi()
+  const { profile } = useUser()
   const [products, setProducts] = useState<any[]>(externalProducts || [])
   const [greeting, setGreeting] = useState('')
   const [currentTime, setCurrentTime] = useState('')
@@ -141,11 +143,13 @@ export default function ClassicDashboard({ products: externalProducts, onRefresh
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">{totalItems} items in stock</p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Total Value</p>
-            <p className="text-3xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalValue)}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Current inventory value</p>
-          </div>
+          {profile?.role !== 'cashier' && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Total Value</p>
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalValue)}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Current inventory value</p>
+            </div>
+          )}
 
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Low Stock</p>

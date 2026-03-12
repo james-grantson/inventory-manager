@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import DashboardHeader from './components/DashboardHeader'
 import { useApi } from '@/lib/api'
+import { useUser } from '@/contexts/UserContext'
 import { Package, DollarSign, AlertTriangle, TrendingUp, TrendingDown, Minus, Layout } from 'lucide-react'
 
 interface SimpleDashboardProps {
@@ -15,6 +16,7 @@ interface SimpleDashboardProps {
 export default function SimpleDashboard({ products: externalProducts, onRefresh }: SimpleDashboardProps) {
   const router = useRouter()
   const { apiFetch } = useApi()
+  const { profile } = useUser()
   const [products, setProducts] = useState<any[]>(externalProducts || [])
   const [darkMode, setDarkMode] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
@@ -75,16 +77,21 @@ export default function SimpleDashboard({ products: externalProducts, onRefresh 
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalProducts}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Total Products</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <DollarSign className="h-8 w-8 text-green-500 mb-2" />
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Inventory Value</p>
-          </div>
+
+          {profile?.role !== 'cashier' && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <DollarSign className="h-8 w-8 text-green-500 mb-2" />
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalValue)}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Inventory Value</p>
+            </div>
+          )}
+
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <AlertTriangle className="h-8 w-8 text-yellow-500 mb-2" />
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{lowStock}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Low Stock Items</p>
           </div>
+
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <Minus className="h-8 w-8 text-red-500 mb-2" />
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{outOfStock}</p>

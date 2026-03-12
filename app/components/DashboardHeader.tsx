@@ -18,7 +18,8 @@ import {
   Mail,
   LogOut,
   User,
-  Store
+  Store,
+  BarChart
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 import { useUser } from '@/contexts/UserContext'
@@ -202,13 +203,27 @@ export default function DashboardHeader({
               </svg>
             </Link>
             
-            <Link 
-              href="/reports" 
-              className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700" 
-              title="Generate Reports"
-            >
-              <BarChart3 className="h-5 w-5" />
-            </Link>
+            {/* Simple Reports Link */}
+            {profile?.role !== 'cashier' && (
+              <Link 
+                href="/reports" 
+                className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700" 
+                title="Simple Reports"
+              >
+                <BarChart3 className="h-5 w-5" />
+              </Link>
+            )}
+
+            {/* Enhanced Reports Link */}
+            {profile?.role !== 'cashier' && (
+              <Link
+                href="/reports/enhanced"
+                className="p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-all border border-gray-200 dark:border-gray-700"
+                title="Enhanced Reports"
+              >
+                <BarChart className="h-5 w-5" />
+              </Link>
+            )}
 
             <Link 
               href="/categories" 
@@ -268,7 +283,6 @@ export default function DashboardHeader({
                           onClick={() => {
                             setCurrentOrganization(org);
                             setOrgDropdownOpen(false);
-                            // Optionally refresh data – the context will handle reload via useEffect
                           }}
                           className={`w-full px-4 py-3 text-left text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${
                             currentOrganization?.id === org.id ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600' : ''
